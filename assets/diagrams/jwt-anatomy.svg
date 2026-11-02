@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 270" role="img" aria-labelledby="jwt-title">
+  <title id="jwt-title">An ID token is three base64url strings joined by dots: a header, the claims, and a signature over the first two.</title>
+  <defs>
+    <marker id="jwt-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- header -->
+  <text x="111" y="36" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">header</text>
+  <rect x="16" y="50" width="190" height="80" rx="4" fill="var(--code-bg)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="111" y="85" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">alg: EdDSA</text>
+  <text x="111" y="105" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">kid: key id</text>
+
+  <text x="216" y="100" font-family="var(--font-display)" font-size="24" font-weight="700" fill="var(--ink)" text-anchor="middle">.</text>
+
+  <!-- claims -->
+  <text x="321" y="36" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">claims</text>
+  <rect x="226" y="50" width="190" height="80" rx="4" fill="var(--code-bg)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="321" y="85" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">iss  sub  aud</text>
+  <text x="321" y="105" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">iat  exp  nonce</text>
+
+  <text x="426" y="100" font-family="var(--font-display)" font-size="24" font-weight="700" fill="var(--ink)" text-anchor="middle">.</text>
+
+  <!-- signature -->
+  <text x="531" y="36" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+  <rect x="436" y="50" width="190" height="80" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="531" y="85" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Ed25519 over</text>
+  <text x="531" y="105" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">"header.claims"</text>
+
+  <!-- bracket under header and claims: the signed bytes -->
+  <path d="M16 146 V156 H416 V146" fill="none" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="216" y="178" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">signed bytes</text>
+  <path d="M268 174 C 380 176, 470 172, 530 136" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#jwt-arrow-accent)"/>
+
+  <!-- note -->
+  <text x="320" y="222" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">base64url text: readable by anyone,</text>
+  <text x="320" y="240" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">changeable by no one without the key.</text>
+</svg>

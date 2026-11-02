@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 720" role="img" aria-labelledby="pve-title">
+  <title id="pve-title">Document C2, custody C1: two readings of the same hosted account. What the document says, the C2 shape: the user key holds Elect, Transfer, Update and Verify and is held by you; the operational key holds Sign and Auth and is held by IdentiKey, usable only through the ceremony and the log. What is true today, C1 in effect: nobody holds the user key, because its private half was discarded at signup, so its privileges cannot be exercised; no one can rotate the operational key, add a resolver or move the identity, and the key graph is frozen. The operational key is the same in both readings. On the ladder, the document has the C2 shape and custody is C1 in effect. What is missing is one key in your hands.</title>
+  <defs>
+    <marker id="pve-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+  </defs>
+
+  <!-- column headers -->
+  <rect x="20" y="16" width="290" height="50" rx="4" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="165" y="38" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">What the document says</text>
+  <text x="165" y="56" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the C2 shape</text>
+  <rect x="330" y="16" width="290" height="50" rx="4" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="475" y="38" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">What is true today</text>
+  <text x="475" y="56" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">C1 in effect</text>
+
+  <!-- row label: user key -->
+  <text x="20" y="96" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">user key (the inception key)</text>
+  <line x1="214" y1="91" x2="620" y2="91" stroke="var(--rule)" stroke-width="1.5"/>
+
+  <!-- left: user key -->
+  <rect x="20" y="108" width="290" height="104" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="165" y="132" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Elect  Transfer  Update  Verify</text>
+  <text x="165" y="152" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">governing: can change the key graph</text>
+  <text x="36" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">holder</text>
+  <text x="90" y="186" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)">you</text>
+
+  <!-- right: user key -->
+  <rect x="330" y="108" width="290" height="104" rx="4" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="475" y="132" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink-3)" text-anchor="middle">Elect  Transfer  Update  Verify</text>
+  <line x1="364" y1="128" x2="586" y2="128" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="475" y="152" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">written down, but no one can use them</text>
+  <text x="346" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">holder</text>
+  <text x="400" y="186" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--bad)">nobody</text>
+  <text x="400" y="203" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">private half discarded at signup</text>
+
+  <!-- consequences -->
+  <line x1="475" y1="214" x2="475" y2="232" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#pve-arrow-ink)"/>
+  <rect x="330" y="236" width="290" height="120" rx="4" fill="var(--paper)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="475" y="258" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">key graph frozen</text>
+  <text x="350" y="282" font-family="var(--font-display)" font-size="12" fill="var(--ink)">no one can rotate the operational key</text>
+  <text x="350" y="302" font-family="var(--font-display)" font-size="12" fill="var(--ink)">no one can add a resolver</text>
+  <text x="350" y="322" font-family="var(--font-display)" font-size="12" fill="var(--ink)">no one can move the identity</text>
+  <text x="350" y="344" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">until a user-held key exists</text>
+
+  <rect x="20" y="236" width="290" height="120" rx="4" fill="var(--paper)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="165" y="258" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">what the split promises</text>
+  <text x="40" y="282" font-family="var(--font-display)" font-size="12" fill="var(--ink)">you can rotate the operational key</text>
+  <text x="40" y="302" font-family="var(--font-display)" font-size="12" fill="var(--ink)">you can add or change resolvers</text>
+  <text x="40" y="322" font-family="var(--font-display)" font-size="12" fill="var(--ink)">you can move the identity</text>
+  <text x="40" y="344" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">and IdentiKey cannot outvote you</text>
+
+  <!-- row label: operational key -->
+  <text x="20" y="390" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">operational key</text>
+  <line x1="124" y1="385" x2="620" y2="385" stroke="var(--rule)" stroke-width="1.5"/>
+
+  <rect x="20" y="402" width="290" height="104" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="165" y="426" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Sign  Auth</text>
+  <text x="165" y="446" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">doing: cannot change the key graph</text>
+  <text x="36" y="476" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">holder</text>
+  <text x="90" y="476" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">IdentiKey, sealed</text>
+  <text x="90" y="494" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">only through the ceremony and log</text>
+
+  <rect x="330" y="402" width="290" height="104" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="475" y="426" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Sign  Auth</text>
+  <text x="475" y="446" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the same: this part is real</text>
+  <text x="346" y="476" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">holder</text>
+  <text x="400" y="476" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">IdentiKey, sealed</text>
+  <text x="400" y="494" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">ceremony and log enforced in code</text>
+  <rect x="310" y="444" width="20" height="20" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="460" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink-2)" text-anchor="middle">=</text>
+
+  <!-- ladder strip -->
+  <text x="20" y="548" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">On the custody ladder</text>
+  <line x1="80" y1="600" x2="560" y2="600" stroke="var(--rule)" stroke-width="2"/>
+  <circle cx="80" cy="600" r="7" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <circle cx="200" cy="600" r="11" fill="var(--bad)" stroke="var(--bad)" stroke-width="2"/>
+  <circle cx="320" cy="600" r="11" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/>
+  <circle cx="440" cy="600" r="7" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <circle cx="560" cy="600" r="7" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="80" y="580" font-family="var(--font-mono)" font-size="13" fill="var(--ink-3)" text-anchor="middle">C0</text>
+  <text x="200" y="580" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">C1</text>
+  <text x="320" y="580" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">C2</text>
+  <text x="440" y="580" font-family="var(--font-mono)" font-size="13" fill="var(--ink-3)" text-anchor="middle">C3</text>
+  <text x="560" y="580" font-family="var(--font-mono)" font-size="13" fill="var(--ink-3)" text-anchor="middle">C4</text>
+  <text x="200" y="630" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">custody in effect</text>
+  <text x="320" y="630" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">document shape</text>
+  <text x="320" y="646" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">(stored rung: c2)</text>
+
+  <text x="320" y="690" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">Missing: one key in your hands, carrying Elect.</text>
+</svg>

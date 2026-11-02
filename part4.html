@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Part 4. The hosted service · IdentiKey tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="index.html"><span class="brand-long">IdentiKey, from the ground up</span><span class="brand-short">IdentiKey</span></a><nav aria-label="Parts"><a href="index.html">Start</a><a href="part1.html">Part 1</a><a href="part2.html">Part 2</a><a href="part3.html">Part 3</a><a href="part4.html" aria-current="page">Part 4</a><a href="part5.html">Part 5</a><a href="glossary.html">Glossary</a></nav></div></header>
+<div class="page">
+<main class="prose">
+<p class="kicker">Part 4</p><h1 id="part-4-the-hosted-service">The hosted service</h1>
+<p>Parts 2 and 3 described IdentiKey from the outside, as an app or a verifier sees it. This part goes inside the hosted service at <code>auth.identikey.me</code>: what an account is made of, which keys exist and who holds them, how the service is allowed to use a key on your behalf, and what you can do from the account page. It is the most technical part of the tutorial, and it is also the part that matters most for understanding what IdentiKey actually is, because the honest answer to "who holds my keys?" is in the details.</p>
+<h3 id="s17">17. Custody and access are two different questions</h3>
+<p>Two questions are easy to run together, and keeping them apart is the single most useful habit this tutorial can teach.</p>
+<p><strong>Custody</strong> asks: <em>who can produce a signature with your key?</em> If the answer is "only me", you have self-custody. If the answer is "the service, whenever it likes", you have a traditional account, however the login screen is dressed up. If the answer is "the service, but only when I have just proved I am present and asked for it, and it writes that down where I can check", you have something in between, and that something is what IdentiKey calls <strong>managed</strong> custody.</p>
+<p><strong>Access</strong> asks: <em>how do you authenticate in order to reach the key?</em> A password, an emailed link, a passkey, a hardware signer. These are mechanisms, not places on the custody scale. A passkey is not a kind of custody. Self-custody is not a login method. You can hold your own key and reach it with a passkey, or let a service hold your key and reach it with the same passkey.</p>
+<p><a class="xref" href="part5.html">Part 5</a> lays out both axes as a ladder and a grid. For this part, one line matters: the difference between a service that <strong>can sign without you</strong> and one that <strong>cannot sign without an authenticated instruction that it logs and you can audit</strong>. IdentiKey calls the first <strong>C1</strong>, custodial, and the second <strong>C2</strong>, managed, and the whole design of the hosted service is an attempt to build the second rather than the first. <a class="xref" href="part4.html#s18">Sections 18</a> to 20 show how, and <a class="xref" href="part5.html#s26">section 26</a> says how far it gets.</p>
+<p>The numbers are positions on a scale IdentiKey calls <strong>custody rungs</strong>, C0 to C4, each answering the custody question differently; <a class="xref" href="part5.html#s23">section 23</a> lays out the whole ladder, and this part needs only C1 and C2.</p>
+<h3 id="s18">18. What signup creates</h3>
+<p>When you create an account at <code>/signup</code>, the service does the following, in one request, before you have touched a passkey.</p>
+<ol>
+<li>
+<p><strong>It generates two key pairs.</strong> The first is the <strong>user key</strong>, a <code>PrivateKeyBase</code> from the Blockchain Commons library (the open-source project that publishes the XID and Gordian Envelope specifications of <a class="xref" href="part3.html">Part 3</a>, and the libraries that implement them): a Schnorr signing key on the secp256k1 curve together with an X25519 key for encryption. That bundle is the library's standard shape for an identity's key, which is why the inception key is Schnorr rather than Ed25519. The second is the <strong>operational key</strong>, an Ed25519 signing key that belongs to IdentiKey.</p>
+<p>X25519 is a key-agreement scheme, not a signature scheme: two parties each combine their own private key with the other's public key and arrive at the same shared secret, from which an encryption key is derived. It is what lets other people encrypt data to you (<a class="xref" href="part4.html#s21">section 21</a>).</p>
+</li>
+<li>
+<p><strong>It builds the XID document.</strong> The user key is the inception key, so the XID is the hash of its public half. In the document the user key holds <code>Elect</code>, <code>Transfer</code>, <code>Verify</code> and <code>Update</code>: the governing privileges from <a class="xref" href="part3.html#s14">section 14</a>. The operational key holds <code>Sign</code> and <code>Auth</code>: the doing privileges. The construction is refused if it would give IdentiKey's key <code>All</code> or <code>Elect</code>, or would otherwise fail the shape of a managed document. (<code>All</code> is the privilege that stands for every other, so granting it would be granting <code>Elect</code> by another name.)</p>
+<p>That shape is the one <a class="xref" href="part4.html#s17">section 17</a> asked for: the key IdentiKey holds carries only the doing privileges, and every governing privilege sits on a key IdentiKey does not hold. The check runs while the document is being built, before anything is stored, so an account that breaks the rule is never created.</p>
+</li>
+<li>
+<p><strong>It discards the user's signing private key.</strong> The Schnorr private key is dropped from memory. It is never written to the database. Nothing in the service can sign with the key that holds <code>Elect</code>.</p>
+</li>
+<li>
+<p><strong>It seals two secrets it will keep.</strong> The user key's X25519 private scalar is sealed as the <strong>encapsulation key</strong> (<a class="xref" href="part4.html#s21">section 21</a> explains what it is for). The operational key's thirty-two-byte Ed25519 seed is sealed as the <strong>managed key blob</strong>. Both are encrypted with XChaCha20-Poly1305 under the deployment's <strong>managed wrap key</strong>, a thirty-two-byte secret the server receives from its environment and that is identified by a key id so it can be rotated forward. The sealed envelope binds the account's XID and the key's public half, so a blob cannot be moved from one account to another.</p>
+<p>A scalar is simply the private half of an X25519 key: a single thirty-two-byte number. XChaCha20-Poly1305 is an authenticated encryption scheme: it hides the contents and attaches a tag that fails to verify if a single byte of the sealed data is altered, so a blob cannot be tampered with undetected, and because the XID and the public half are bound into the envelope, a blob presented under any other account fails to open rather than yielding a key. The key id is stored with each blob so that, when a new wrap key is introduced, the server can still tell which key opens an older blob.</p>
+</li>
+<li>
+<p><strong>It stores the account</strong> with custody rung <code>c2</code>, the document, and the two sealed blobs.</p>
+</li>
+<li>
+<p><strong>It signs you in and starts passkey registration.</strong> The browser receives an <code>identikey_account</code> cookie (HttpOnly, Secure, SameSite=Lax, valid twenty-four hours) that identifies this account to the service, and the WebAuthn registration options of <a class="xref" href="part1.html#s7">section 7</a> with the XID as the user name. Until you save a passkey the account exists but cannot be reached from another browser.</p>
+<p>The three cookie flags each close one door: HttpOnly keeps the cookie out of reach of scripts running in the page, Secure sends it only over HTTPS, and SameSite=Lax withholds it from requests other sites make in the background or by form post, sending it only when you navigate to the service. At this moment the cookie is the only credential the account has, and it lives in this browser alone, which is why no other browser can reach the account yet.</p>
+</li>
+</ol>
+<figure class="ik-figure is-diagram" id="fig-signup"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 786" role="img" aria-labelledby="sg-title">
+  <title id="sg-title">What signup creates: one /signup request generates a user key (Schnorr secp256k1 plus X25519) and an operational key (Ed25519), builds the XID document in which the user key holds Elect, Transfer, Verify and Update and the operational key holds Sign and Auth, discards the user's signing private key, seals the X25519 scalar as the encapsulation key and the Ed25519 seed as the managed key blob under the managed wrap key, stores the account at rung C2, hands the browser an account cookie and starts passkey registration.</title>
+  <defs>
+    <marker id="sg-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="sg-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="sg-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- 1. the request -->
+  <rect x="180" y="22" width="280" height="52" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="44" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">POST /signup</text>
+  <text x="320" y="62" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">one request, before you touch a passkey</text>
+
+  <!-- split to two key pairs -->
+  <path d="M320 74 V90 H170 V109" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#sg-arrow-accent)"/>
+  <path d="M320 90 H470 V109" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sg-arrow-ink)"/>
+  <text x="320" y="106" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">generates two key pairs</text>
+
+  <!-- user key -->
+  <rect x="30" y="114" width="280" height="98" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="170" y="138" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">user key</text>
+  <text x="170" y="158" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Schnorr secp256k1 + X25519</text>
+  <text x="170" y="178" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">signing and encryption; the inception key</text>
+  <text x="170" y="196" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">XID = hash of its public half</text>
+
+  <!-- operational key -->
+  <rect x="330" y="114" width="280" height="98" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="470" y="138" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">operational key</text>
+  <text x="470" y="158" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Ed25519</text>
+  <text x="470" y="178" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">a signing key that belongs to IdentiKey</text>
+  <text x="470" y="196" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">does the daily work</text>
+
+  <!-- 2. the XID document -->
+  <line x1="170" y1="214" x2="170" y2="238" stroke="var(--accent)" stroke-width="2" marker-end="url(#sg-arrow-accent)"/>
+  <line x1="470" y1="214" x2="470" y2="238" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sg-arrow-ink)"/>
+
+  <rect x="30" y="242" width="580" height="118" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="46" y="264" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">XID document</text>
+  <text x="594" y="264" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">built from both public halves; refused if IdentiKey's key would get All or Elect</text>
+
+  <rect x="46" y="276" width="270" height="70" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="181" y="297" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">user key</text>
+  <text x="181" y="317" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Elect Transfer Verify Update</text>
+  <text x="181" y="336" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">governing</text>
+
+  <rect x="324" y="276" width="270" height="70" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="459" y="297" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">operational key</text>
+  <text x="459" y="317" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Sign Auth</text>
+  <text x="459" y="336" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">doing</text>
+
+  <!-- 3 and 4. the private halves -->
+  <text x="320" y="382" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">then the three private secrets:</text>
+  <line x1="120" y1="362" x2="120" y2="400" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#sg-arrow-bad)"/>
+  <line x1="520" y1="362" x2="520" y2="400" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sg-arrow-ink)"/>
+
+  <!-- wrap-key band around the two sealed blobs -->
+  <rect x="222" y="396" width="398" height="178" rx="6" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="421" y="512" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">both sealed under the managed wrap key</text>
+  <text x="421" y="529" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">XChaCha20-Poly1305, a 32-byte secret from the environment,</text>
+  <text x="421" y="545" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">identified by a key id so it can be rotated forward;</text>
+  <text x="421" y="561" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the envelope binds the account XID and the key's public half</text>
+
+  <!-- discarded signing key -->
+  <rect x="30" y="404" width="180" height="84" rx="4" fill="var(--paper)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="114" y="428" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">Schnorr signing key</text>
+  <line x1="46" y1="424" x2="182" y2="424" stroke="var(--bad)" stroke-width="2"/>
+  <text x="120" y="450" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">discarded, never stored</text>
+  <text x="120" y="468" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">nothing here can sign</text>
+  <text x="120" y="482" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">with the Elect key</text>
+  <line x1="192" y1="411" x2="204" y2="423" stroke="var(--bad)" stroke-width="2"/>
+  <line x1="204" y1="411" x2="192" y2="423" stroke="var(--bad)" stroke-width="2"/>
+
+  <!-- encapsulation key -->
+  <rect x="236" y="404" width="170" height="84" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="321" y="428" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">X25519 private scalar</text>
+  <text x="321" y="448" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">from the user key</text>
+  <text x="321" y="468" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">sealed as the</text>
+  <text x="321" y="482" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">encapsulation key</text>
+
+  <!-- managed key blob -->
+  <rect x="436" y="404" width="170" height="84" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="521" y="428" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">Ed25519 seed, 32 bytes</text>
+  <text x="521" y="448" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">from the operational key</text>
+  <text x="521" y="468" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">sealed as the</text>
+  <text x="521" y="482" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">managed key blob</text>
+
+  <!-- 5. the account -->
+  <path d="M421 574 V584 H320 V604" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sg-arrow-ink)"/>
+
+  <rect x="120" y="608" width="400" height="56" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="630" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">account stored at custody rung C2</text>
+  <text x="320" y="650" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the document, the encapsulation key and the managed key blob</text>
+
+  <!-- 6. sign in and start passkey registration -->
+  <path d="M320 664 V680 H170 V698" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sg-arrow-ink)"/>
+  <path d="M320 680 H470 V698" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sg-arrow-ink)"/>
+
+  <rect x="30" y="702" width="280" height="70" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="170" y="724" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">browser receives the account cookie</text>
+  <text x="170" y="743" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">identikey_account</text>
+  <text x="170" y="760" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">HttpOnly, Secure, SameSite=Lax, 24 hours</text>
+
+  <rect x="330" y="702" width="280" height="70" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="470" y="724" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">passkey registration begins</text>
+  <text x="470" y="743" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">WebAuthn options, user name = the XID</text>
+  <text x="470" y="760" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">until saved: unreachable from another browser</text>
+</svg>
+</div></div><figcaption>What signup creates: two key pairs, a document that splits their privileges, two sealed secrets, and one private key thrown away on purpose.</figcaption></figure>
+
+<figure class="ik-figure is-example" id="fig-key-blob"><div class="ik-body"><div class="ex-title">Inside a managed key blob, byte by byte</div><pre><code class="language-text">custody_records.managed_key_blob                     80 bytes with kid &quot;v1&quot;
+
+offset  length  field
+0       4       magic        &quot;IKMK&quot;   49 4b 4d 4b
+4       1       version      01
+5       1       kid_len      02
+6       2       kid          &quot;v1&quot;     which managed wrap key opens this blob
+8       24      nonce        random, fresh for every seal
+32      48      ciphertext   the 32-byte Ed25519 seed, encrypted,
+                             then the 16-byte Poly1305 tag
+
+cipher  XChaCha20-Poly1305, key = the managed wrap key named by kid
+AAD     &quot;identikey-managed-key-v1\n&quot; ‖ XID (32 bytes) ‖ operational Ed25519 public (32 bytes)
+        authenticated but not stored: the opener must supply the same values
+</code></pre>
+<pre><code class="language-text">custody_records.encapsulation_key_blob               same layout, its own tag
+
+0       4       magic        &quot;IKEK&quot;   49 4b 45 4b
+4       1       version      01
+5       1+n     kid_len, kid
+6+n     24      nonce
+30+n    48      ciphertext   the 32-byte X25519 scalar + 16-byte tag
+
+AAD     &quot;identikey-encapsulation-key-v1\n&quot; ‖ XID ‖ your X25519 public (the wrap recipient)
+</code></pre>
+<pre><code class="language-text">open(blob, xid, public)
+  wrong magic or version, empty kid, ciphertext not 48 bytes  → refused, malformed
+  no wrap key for this kid                                    → refused, key unavailable
+  tag fails under this xid and public                         → refused, cannot be opened
+      (another account's XID, a swapped public key, an altered byte, or an IKEK blob read as IKMK)
+  IKMK: seed's Ed25519 public ≠ the document's operational key → refused, key mismatch
+  IKEK: scalar's X25519 public ≠ the document's wrap recipient  → refused
+</code></pre>
+<p class="ik-note" style="padding:0.5rem 1rem 0.75rem">The kid defaults to <code>v1</code> and is set by the server's environment; the nonce and ciphertext are random and are not shown.</p></div><figcaption>The two sealed blobs byte by byte, as the server writes them. The XID and the public key are authenticated with the blob rather than stored in it, so the blob opens only for the account and key it was sealed for. The kid is the default; nonce and ciphertext are not shown.</figcaption></figure>
+
+<p>The result is an account whose document has exactly the shape of managed custody: the signing key IdentiKey holds cannot change the key graph (the set of keys the document lists and the privileges each holds), and the key that can change the key graph is not IdentiKey's. It is also an account in which, at this moment, nobody holds the private half of the <code>Elect</code> key at all. The service threw it away on purpose, because keeping it would have made the privilege split a promise rather than a mechanism (<a class="xref" href="part3.html#s14">section 14</a>). What that absence means for the custody rung is the subject of <a class="xref" href="part5.html#s26">section 26</a>.</p>
+<h3 id="s19">19. Consent and the log</h3>
+<p>If IdentiKey holds the signing key, what stops it signing whenever it likes? Code, and a record. The code path that uses the operational key requires a fresh proof from you (<a class="xref" href="part4.html#s20">section 20</a>). The record is the <strong>consent log</strong>, and it is what makes the claim auditable rather than merely asserted.</p>
+<p>The consent log is a Postgres table that refuses <code>UPDATE</code> and <code>DELETE</code>. Each row describes one use, or attempted use, of your key, and the rows form a <strong>hash chain</strong>: every entry includes the hash of the previous entry, and its own hash is computed over a fixed, length-prefixed encoding of its fields. Change or remove any row and every later hash stops matching. The fields committed by the hash are:</p>
+<p>The refusal is a rule of the table itself, not of the application code, so a row cannot be altered after it is written by anything the application's queries do (only removing the rule itself, a change to the database's schema, would allow it). Length-prefixing each field is what makes the encoding unambiguous: without it, two different sets of field values could run together into the same bytes and so the same hash.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it records</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>xid</code>, <code>seq</code>, <code>prev_hash</code></td>
+<td>Which account, the position in that account's chain, and the link to the previous entry.</td>
+</tr>
+<tr>
+<td><code>action</code></td>
+<td>What was done: <code>signing_instruction_authorized</code>, <code>signing_completed</code>, <code>signing_failed</code>, a device added, an <code>encapsulation_export</code>, <code>encapsulation_unwrap</code> or <code>encapsulation_rewrap</code>, or a custody migration.</td>
+</tr>
+<tr>
+<td><code>audience</code>, <code>purpose</code></td>
+<td>Who the signature was for and the human-readable reason shown to you. The purpose is in the hash so that what the log says you agreed to cannot be edited after the fact.</td>
+</tr>
+<tr>
+<td><code>access_level</code></td>
+<td>How you proved presence: A3 for a passkey, A4 for a signature from a key you hold.</td>
+</tr>
+<tr>
+<td><code>credential_id</code></td>
+<td>Which passkey or device credential made the proof.</td>
+</tr>
+<tr>
+<td><code>proof_kind</code>, <code>proof_hash</code></td>
+<td>The kind of proof (a WebAuthn assertion or an identikey-auth Response) and the SHA-256 of its bytes. The bytes themselves are stored beside the row.</td>
+</tr>
+<tr>
+<td><code>result</code></td>
+<td><code>signed</code>, <code>refused</code> or <code>error</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p>One design choice here is subtle and central. The proof in each row is an <strong>access credential</strong>: a WebAuthn assertion your authenticator produced, or a response signed by a key only you hold. It is never a signature made with the managed key. If the log recorded IdentiKey's own signatures as evidence of consent, it would be IdentiKey vouching for IdentiKey, and the rung would be theatre. Because the proof is something only your authenticator could have made, each row is evidence that you were there.</p>
+<figure class="ik-figure is-widget" id="fig-hashchain" data-widget="hashchain" data-opts="{}"><div class="ik-body"></div><figcaption>The consent log as a hash chain. Edit any field of any row and every later hash stops matching; the break shows exactly where the record was changed.</figcaption></figure>
+
+<figure class="ik-figure is-example" id="fig-consent-row"><div class="ik-body"><div class="ex-title">One row of the consent log (the fields the hash commits to)</div><pre><code class="language-json">{
+  &quot;xid&quot;:           &quot;3dLGACrVKP67MtW4kwbGqrHZsJUcm2tjQ9pEf8vNyRBa&quot;,
+  &quot;seq&quot;:           42,
+  &quot;prev_hash&quot;:     &quot;9f2c…e71a&quot;,
+  &quot;action&quot;:        &quot;signing_completed&quot;,
+  &quot;audience&quot;:      &quot;mjolnir.example&quot;,
+  &quot;purpose&quot;:       &quot;Sign in to Mjolnir as this identity&quot;,
+  &quot;access_level&quot;:  &quot;a3&quot;,
+  &quot;credential_id&quot;: &quot;7b1e44c2-…-9a0f&quot;,
+  &quot;proof_kind&quot;:    &quot;webauthn_assertion&quot;,
+  &quot;proof_hash&quot;:    &quot;c41d…0b9e&quot;,
+  &quot;result&quot;:        &quot;signed&quot;,
+  &quot;hash&quot;:          &quot;SHA-256 over a version byte and every field above, variable-length ones length-prefixed&quot;
+}
+</code></pre>
+<p class="ik-note" style="padding:0.5rem 1rem 0.75rem">The table refuses <code>UPDATE</code> and <code>DELETE</code>. Row 43 will carry this row's <code>hash</code> as its <code>prev_hash</code>.</p></div><figcaption>One consent-log row, with the fields the hash commits to. The proof bytes are stored beside the row and hashed into it.</figcaption></figure>
+
+<p>What the log gives you is an answer to "what has been signed in my name, when, for whom, and on what proof?" that the service cannot quietly rewrite. It does not, by itself, stop a dishonest operator from ignoring the code and signing off the books: an operator holds the managed wrap key, and could in principle unseal the operational seed outside the ceremony and sign without writing a row. No log can. What it does is make the honest path and the dishonest path leave different evidence, which is the most a custodian can offer and more than a custodial account does.</p>
+<h3 id="s20">20. Using the managed key: the challenge ceremony</h3>
+<p>The one thing IdentiKey's operational key does for you is answer <strong>challenges</strong>. A challenge is a small signed-request object from the <code>identikey-auth</code> protocol: canonical CBOR (dCBOR, <a class="xref" href="part3.html#s14">section 14</a>) carrying a version number, a random nonce, an audience naming the party asking, an issue time and an expiry. Answering it means signing it, producing a <strong>Response</strong> that the asking party can verify against your published document. This is how a Mjolnir server, for instance, confirms that the person at the keyboard is the owner of a given XID before it binds a session to them.</p>
+<p>Because the key that signs is IdentiKey's, the service wraps every use of it in a ceremony that needs you in the loop:</p>
+<ol>
+<li>
+<p><strong>Begin.</strong> The client sends <code>POST /managed-challenge/begin</code> with your XID, the challenge bytes (at most 8 KB, with an expiry no more than ten minutes out and a two-minute allowance for clock skew), a commitment to a secret the client will reveal later (the same PKCE idea as <a class="xref" href="part2.html#s10">section 10</a>), which kind of proof you will give (<code>a3</code> for a passkey, <code>a4</code> for a key you hold), and the details of the session being bound: an Ed25519 session public key, an operation and a resource (each a short tuple of printable components), and a thirty-two-byte channel identifier. The service stores a pending attempt and returns a request id and a <strong>consent challenge</strong>: a digest, under the domain tag <code>identikey-managed-consent-v1</code>, over everything just stored. It is valid for five minutes.</p>
+<p>The session details are there because the ceremony produces two signatures, not one: besides answering the challenge, the operational key signs a statement that this session key, for this operation on this resource, belongs to you, which is the bind signature of steps 3 and 4. And because the consent challenge is a digest over every stored field, what you sign in the next step is tied to exactly this challenge, this session and this operation; nothing can be swapped between begin and finish.</p>
+</li>
+<li>
+<p><strong>Prove.</strong> You answer the consent challenge. With <code>a3</code>, your browser produces a passkey assertion (over WebAuthn's own random challenge, which the service has tied to this attempt), sent to <code>/managed-challenge/finish/a3</code>. With <code>a4</code>, a key you hold signs it, sent to <code>/finish/a4</code>. A wallet acting as the <code>a4</code> signer recomputes the digest from the returned fields and refuses to sign if they do not match, so a client cannot show you one thing and have you consent to another. The a4 path needs an Ed25519 key that holds Elect in the document, which an account made at hosted signup does not have (its Elect key is the inception key, Schnorr and discarded), so for those accounts a3 is the only way through today.</p>
+</li>
+<li>
+<p><strong>Sign, once.</strong> The service verifies your proof. Then, in a database transaction of its own, it rechecks that the consent has not expired and claims the key use so it can never be repeated. Only once that claim is committed does it go on: it unseals the Ed25519 seed from the managed key blob, signs the stored challenge to make the Response, signs the session bind with the same key, writes the consent-log entries of <a class="xref" href="part4.html#s19">section 19</a>, and zeroizes the seed. If signing fails, a <code>signing_failed</code> entry is written and nothing is released. A proof that does not verify, or a consent that has expired, is refused before anything is claimed and writes no entry; and if the outcome cannot be saved after signing, the attempt is left claimed and marked indeterminate when the service next starts.</p>
+<p>Because the claim is committed, under a lock on the attempt, before the key is unsealed, two requests that race to finish the same attempt cannot both be served: one claims it, the other finds it already claimed. Zeroizing means overwriting the seed's bytes in memory with zeros before the memory is released, so the unsealed key does not linger where a later bug or a memory dump could find it.</p>
+</li>
+<li>
+<p><strong>Retrieve.</strong> The client calls <code>/managed-challenge/retrieve</code> with the secret it committed to at begin. If the attempt completed and the secret matches, it receives the Response and the bind signature together. A missing or wrong secret receives neither. The service stores five states for an attempt: <code>authorized</code> (the proof was accepted), <code>claimed</code>, <code>completed</code>, <code>failed</code>, and <code>indeterminate</code> when the outcome could not be established. Retrieve reports an attempt that has not finished, including one whose proof has not yet arrived, as <code>pending</code>.</p>
+<p>The secret is what ties the result to the client that began the ceremony: anyone who learned the request id, from a log or a shared screen, cannot collect the Response without it.</p>
+</li>
+</ol>
+<figure class="ik-figure is-example" id="fig-begin"><div class="ik-body"><div class="ex-title">What begin sends and returns</div><pre><code class="language-http">POST /managed-challenge/begin
+Content-Type: application/json
+
+{
+  &quot;xid&quot;:                 &quot;3dLGACrVKP67MtW4kwbGqrHZsJUcm2tjQ9pEf8vNyRBa&quot;,
+  &quot;challenge&quot;:           &quot;pWF2AWNhdWR4LDl6…&quot;,          base64url, the asker's Challenge, at most 8 KiB
+  &quot;verifier_commitment&quot;: &quot;q7Xb0f3k…&quot;,                  base64url of SHA-256(verifier), 32 bytes
+  &quot;proof&quot;:               &quot;a3&quot;,                          or &quot;a4&quot;
+  &quot;session_public_key&quot;:  { &quot;alg&quot;: &quot;ed25519&quot;, &quot;key&quot;: &quot;Ud3j…&quot; },   base64url, 32 bytes
+  &quot;operation&quot;:           [&quot;vms&quot;, &quot;stop&quot;],               1 to 8 parts, each 1 to 64 printable characters
+  &quot;resource&quot;:            [&quot;vm&quot;, &quot;A&quot;],                   same rule
+  &quot;channel&quot;:             &quot;8kTz…&quot;                        base64url, 32 bytes
+}
+</code></pre>
+<pre><code class="language-text">the challenge field, decoded: a dCBOR map with exactly these five keys
+{ &quot;v&quot;: 1, &quot;aud&quot;: &quot;&lt;asker's XID, base58btc&gt;&quot;, &quot;nonce&quot;: h'&lt;16 to 64 bytes&gt;', &quot;iat&quot;: 1767225600, &quot;exp&quot;: 1767225900 }
+
+admitted only if  the bytes are canonical, v = 1, exp − iat ≤ 600 s,
+                  now is within 120 s of the iat..exp window,
+                  and this XID has not begun this same challenge before (else 409)
+</code></pre>
+<pre><code class="language-json">HTTP/1.1 200 OK
+
+{
+  &quot;request_id&quot;:         &quot;0b6e2f4a-91c3-4d0e-8b57-3f1a6c9d2e10&quot;,
+  &quot;consent_challenge&quot;:  &quot;pWF2AWNhdWR4QDQx…&quot;,
+  &quot;session_public_key&quot;: { &quot;alg&quot;: &quot;ed25519&quot;, &quot;key&quot;: &quot;Ud3j…&quot; },
+  &quot;operation&quot;:          [&quot;vms&quot;, &quot;stop&quot;],
+  &quot;resource&quot;:           [&quot;vm&quot;, &quot;A&quot;],
+  &quot;channel&quot;:            &quot;8kTz…&quot;,
+  &quot;public_key&quot;:         { &quot;challenge&quot;: &quot;…&quot;, &quot;allowCredentials&quot;: [ … ], … }
+}
+</code></pre>
+<pre><code class="language-text">consent_challenge, decoded: another Challenge, made by the service
+{ &quot;v&quot;:     1,
+  &quot;aud&quot;:   &quot;&lt;your XID as 64 hex characters&gt;&quot;,
+  &quot;nonce&quot;: SHA-256( &quot;identikey-managed-consent-v1\n&quot; ‖ XID ‖ request_id ‖ len ‖ challenge
+                    ‖ verifier_commitment ‖ iat ‖ session key ‖ operation ‖ resource ‖ channel ),
+  &quot;iat&quot;:   now,
+  &quot;exp&quot;:   the earlier of now + 300 s and the asker's exp }
+
+not in the digest: the proof kind (fixed in the stored row) and the WebAuthn options
+public_key: a3 only, the passkey request options; absent for a4
+</code></pre>
+<p class="ik-note" style="padding:0.5rem 1rem 0.75rem">The operation, resource and session key are echoed back as stored so a wallet can recompute the digest; values are illustrative.</p></div><figcaption>The begin request and response, then the consent challenge decoded. The digest covers the challenge, the commitment and every bind field, but not the proof kind, which the stored row fixes. Values are illustrative; the field names, encodings and limits are the code's.</figcaption></figure>
+
+<p>Three boundaries deserve emphasis. The account cookie alone cannot start a signature; only a fresh assertion or a fresh signature can. The service signs exactly the bytes you consented to and does not consume or evaluate the asking party's nonce or policy, which stay the asking party's responsibility. And a signature made through this ceremony is an A3 (or A4-authorized) use of a managed key. It is never counted as the user having signed with a key of their own.</p>
+<p>The mental model is a notary who holds a stamp with your name on it, uses it only while you stand in front of them and say what to stamp, stamps each thing exactly once, and writes the entry in a bound ledger with your own signature beside it.</p>
+<figure class="ik-figure is-diagram" id="fig-ceremony"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 734" role="img" aria-labelledby="cer-title">
+  <title id="cer-title">The challenge ceremony in four steps between the client, you and the IdentiKey service: Begin posts the challenge, a commitment and the proof kind and receives a request id and a five-minute consent challenge; Prove answers with a passkey assertion (a3) or with your own key's signature over the consent challenge (a4); Sign once verifies the proof, then rechecks expiry and claims the use in a transaction that is committed before it unseals the Ed25519 seed, signs the challenge and the session bind, writes the consent log and zeroizes the seed; Retrieve returns the Response and bind signature to the client that presents the committed secret.</title>
+  <defs>
+    <marker id="cer-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="cer-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="cer-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- lifelines -->
+  <line x1="110" y1="64" x2="110" y2="664" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="320" y1="64" x2="320" y2="664" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="530" y1="64" x2="530" y2="664" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <!-- participants -->
+  <rect x="30" y="18" width="160" height="44" rx="4" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="110" y="37" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">Client</text>
+  <text x="110" y="53" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">app or wallet</text>
+
+  <rect x="240" y="18" width="160" height="44" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="320" y="37" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">You</text>
+  <text x="320" y="53" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">authenticator or held key</text>
+
+  <rect x="450" y="18" width="160" height="44" rx="4" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="530" y="37" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">IdentiKey service</text>
+  <text x="530" y="53" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">holds the operational key</text>
+
+  <!-- 1. Begin -->
+  <line x1="30" y1="82" x2="610" y2="82" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="74" width="80" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="88" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">1  Begin</text>
+
+  <line x1="110" y1="118" x2="524" y2="118" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#cer-arrow-ink)"/>
+  <rect x="200" y="100" width="240" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="112" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">POST /managed-challenge/begin</text>
+  <rect x="140" y="124" width="360" height="34" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="136" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">your XID, the challenge bytes (at most 8 KB), a PKCE-style commitment,</text>
+  <text x="320" y="152" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the proof kind (a3 passkey or a4 held key), the session to bind</text>
+
+  <line x1="530" y1="184" x2="116" y2="184" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#cer-arrow-ink)"/>
+  <rect x="200" y="166" width="240" height="14" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="178" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">request id + consent challenge</text>
+  <rect x="140" y="188" width="360" height="18" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="202" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">a digest over everything stored, tagged identikey-managed-consent-v1, valid 5 min</text>
+
+  <!-- 2. Prove -->
+  <line x1="30" y1="218" x2="610" y2="218" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="210" width="80" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="224" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">2  Prove</text>
+
+  <line x1="110" y1="248" x2="314" y2="248" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#cer-arrow-ink)"/>
+  <rect x="130" y="232" width="164" height="14" fill="var(--paper)" stroke="none"/>
+  <text x="212" y="243" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">shows you the consent challenge</text>
+
+  <line x1="320" y1="288" x2="524" y2="288" stroke="var(--accent)" stroke-width="2" marker-end="url(#cer-arrow-accent)"/>
+  <rect x="330" y="254" width="190" height="28" fill="var(--paper)" stroke="none"/>
+  <text x="425" y="265" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">a3: your passkey assertion</text>
+  <text x="425" y="279" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">a4: your own key's signature</text>
+  <text x="425" y="302" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">a4 signs the consent challenge itself</text>
+  <text x="425" y="317" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">/finish/a3  or  /finish/a4</text>
+  <rect x="96" y="320" width="448" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="332" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">an a4 wallet recomputes the digest itself and refuses to sign on a mismatch</text>
+
+  <!-- 3. Sign, once -->
+  <line x1="30" y1="350" x2="610" y2="350" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="342" width="110" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="356" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">3  Sign, once</text>
+
+  <rect x="400" y="366" width="210" height="196" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="505" y="388" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">claim first, then sign</text>
+  <text x="416" y="410" font-family="var(--font-display)" font-size="12" fill="var(--ink)">verify your proof</text>
+  <text x="416" y="428" font-family="var(--font-display)" font-size="12" fill="var(--ink)">recheck the consent expiry</text>
+  <text x="416" y="446" font-family="var(--font-display)" font-size="12" fill="var(--ink)">claim the use, committed</text>
+  <text x="416" y="464" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">unseal the Ed25519 seed</text>
+  <text x="416" y="482" font-family="var(--font-display)" font-size="12" fill="var(--ink)">sign the challenge: the Response</text>
+  <text x="416" y="500" font-family="var(--font-display)" font-size="12" fill="var(--ink)">sign the session bind</text>
+  <text x="416" y="518" font-family="var(--font-display)" font-size="12" fill="var(--ink)">write the consent-log rows</text>
+  <text x="416" y="536" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">zeroize the seed</text>
+  <text x="416" y="554" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">record the outcome</text>
+
+  <!-- the seed's lifetime -->
+  <rect x="386" y="454" width="6" height="86" rx="3" fill="var(--warm)" stroke="none"/>
+  <rect x="236" y="484" width="144" height="34" fill="var(--paper)" stroke="none"/>
+  <text x="378" y="496" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">key in memory</text>
+  <text x="378" y="512" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">only here</text>
+
+  <!-- failure -->
+  <text x="430" y="580" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">on any failure: a signing_failed row, nothing released</text>
+
+  <!-- 4. Retrieve -->
+  <line x1="30" y1="600" x2="610" y2="600" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="592" width="90" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="606" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">4  Retrieve</text>
+
+  <line x1="110" y1="630" x2="524" y2="630" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#cer-arrow-ink)"/>
+  <rect x="180" y="612" width="280" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="624" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">/managed-challenge/retrieve</text>
+  <rect x="200" y="634" width="240" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="646" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">with the secret committed at Begin</text>
+
+  <line x1="530" y1="670" x2="116" y2="670" stroke="var(--accent)" stroke-width="2" marker-end="url(#cer-arrow-accent)"/>
+  <rect x="200" y="654" width="240" height="14" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="665" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">Response + bind signature, together</text>
+  <text x="320" y="688" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">wrong or missing secret: neither.  unfinished attempts read as pending</text>
+
+  <!-- boundary -->
+  <text x="320" y="718" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">The account cookie alone cannot start a signature; only a fresh assertion or signature can.</text>
+</svg>
+</div></div><figcaption>The challenge ceremony: begin, prove, sign once, retrieve. The use of the key is claimed, and that claim committed, before the key is unsealed; the key is in memory only inside step 3 and is zeroized before it ends.</figcaption></figure>
+
+<figure class="ik-figure is-diagram" id="fig-attempt-states"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 776" role="img" aria-labelledby="ast-title">
+  <title id="ast-title">The states of one managed-challenge attempt as the code stores them. Begin stores the attempt with no state, which retrieve reports as pending. A verified passkey assertion or held-key signature at finish, with the consent unexpired, moves it to authorized and writes a signing_instruction_authorized row; a bad proof or expired consent is an HTTP error that leaves the row unchanged. A claim in its own committed transaction rechecks custody, expiry and the credential and moves it to claimed, or to failed with a signing_failed row. From claimed, unsealing the seed and signing both values moves it to completed with a signing_completed row; a blob that will not open or a signer that refuses moves it to failed; a claim whose result was never recorded is set to indeterminate when the server next starts. A second finish on a claimed attempt gets 409. Retrieve needs the verifier: it returns the Response and bind signature only for completed, the bare state for failed and indeterminate, and pending for the three earlier states.</title>
+  <defs>
+    <marker id="ast-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="ast-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="ast-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+    <marker id="ast-arrow-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--warm)"/>
+    </marker>
+  </defs>
+
+  <!-- begin -->
+  <rect x="40" y="16" width="230" height="36" rx="18" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="155" y="39" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">POST …/begin</text>
+  <line x1="155" y1="52" x2="155" y2="86" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ast-arrow-ink)"/>
+  <text x="172" y="74" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">stores the attempt, returns the consent challenge</text>
+
+  <!-- pending (no state) -->
+  <rect x="40" y="88" width="230" height="52" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="155" y="110" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">no state yet</text>
+  <text x="155" y="128" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">retrieve says pending</text>
+  <text x="300" y="108" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">bad proof or expired consent at finish:</text>
+  <text x="300" y="124" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">an HTTP error; the row is unchanged</text>
+
+  <!-- to authorized -->
+  <line x1="155" y1="140" x2="155" y2="206" stroke="var(--accent)" stroke-width="2" marker-end="url(#ast-arrow-accent)"/>
+  <text x="172" y="160" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">finish/a3 or /a4: your proof verifies</text>
+  <text x="172" y="176" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">and the consent has not expired</text>
+  <text x="172" y="194" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)">log: signing_instruction_authorized</text>
+
+  <!-- authorized -->
+  <rect x="40" y="208" width="230" height="52" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="155" y="230" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">authorized</text>
+  <text x="155" y="248" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">retrieve says pending</text>
+
+  <!-- authorized -> failed -->
+  <path d="M270 234 H520 V254" fill="none" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#ast-arrow-bad)"/>
+  <text x="284" y="227" font-family="var(--font-display)" font-size="12" fill="var(--bad)">recheck fails</text>
+
+  <!-- failed -->
+  <rect x="430" y="256" width="180" height="66" rx="6" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="520" y="278" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--bad)" text-anchor="middle">failed</text>
+  <text x="520" y="295" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">log: signing_failed</text>
+  <text x="520" y="312" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">nothing released</text>
+
+  <!-- to claimed -->
+  <line x1="155" y1="260" x2="155" y2="340" stroke="var(--accent)" stroke-width="2" marker-end="url(#ast-arrow-accent)"/>
+  <text x="172" y="280" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">claim, in its own transaction</text>
+  <text x="172" y="296" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recheck: still C2, not expired,</text>
+  <text x="172" y="312" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">passkey still live, or a4 key still Elect</text>
+  <text x="172" y="328" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">committed before the key is touched</text>
+
+  <!-- claimed -->
+  <rect x="40" y="342" width="230" height="66" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="155" y="364" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">claimed</text>
+  <text x="155" y="381" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">retrieve says pending</text>
+  <text x="155" y="398" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">a racing second finish: 409</text>
+
+  <!-- claimed -> failed -->
+  <path d="M270 356 H596 V324" fill="none" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#ast-arrow-bad)"/>
+  <text x="284" y="347" font-family="var(--font-display)" font-size="12" fill="var(--bad)">blob will not open, or signer refuses</text>
+
+  <!-- claimed -> indeterminate -->
+  <path d="M270 392 H600 V454" fill="none" stroke="var(--warm)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ast-arrow-warm)"/>
+  <text x="284" y="414" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">signed, but the result was never saved:</text>
+  <text x="284" y="430" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">set when the server next starts</text>
+
+  <!-- indeterminate -->
+  <rect x="430" y="456" width="180" height="66" rx="6" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="520" y="478" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">indeterminate</text>
+  <text x="520" y="495" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">a key use of unknown result</text>
+  <text x="520" y="512" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">terminal, never retried</text>
+
+  <!-- to completed -->
+  <line x1="155" y1="408" x2="155" y2="526" stroke="var(--accent)" stroke-width="2" marker-end="url(#ast-arrow-accent)"/>
+  <text x="172" y="452" font-family="var(--font-display)" font-size="12" fill="var(--ink)">unseal the seed, sign the</text>
+  <text x="172" y="468" font-family="var(--font-display)" font-size="12" fill="var(--ink)">Response and the bind,</text>
+  <text x="172" y="484" font-family="var(--font-display)" font-size="12" fill="var(--ink)">zeroize the seed</text>
+  <text x="172" y="502" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)">log: signing_completed</text>
+
+  <!-- seed lifetime -->
+  <rect x="132" y="428" width="6" height="66" rx="3" fill="var(--warm)" stroke="none"/>
+  <text x="124" y="450" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">seed in</text>
+  <text x="124" y="466" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">memory</text>
+  <text x="124" y="482" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">only here</text>
+
+  <!-- completed -->
+  <rect x="40" y="528" width="230" height="52" rx="6" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+  <text x="155" y="550" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--good)" text-anchor="middle">completed</text>
+  <text x="155" y="568" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Response and bind signature stored</text>
+
+  <!-- retrieve -->
+  <line x1="30" y1="606" x2="610" y2="606" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="30" y="630" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--ink)">POST …/retrieve</text>
+  <text x="168" y="630" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">with request_id and the verifier; its SHA-256 must equal the commitment</text>
+
+  <text x="30" y="656" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)">wrong verifier</text>
+  <text x="200" y="656" font-family="var(--font-display)" font-size="12" fill="var(--ink)">an error in every state; nothing else</text>
+  <text x="30" y="678" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--good)">completed</text>
+  <text x="200" y="678" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the Response, the bind signature and the stored bind fields</text>
+  <text x="30" y="700" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)">failed, indeterminate</text>
+  <text x="200" y="700" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the state name only</text>
+  <text x="30" y="722" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink-2)">no state, authorized, claimed</text>
+  <text x="252" y="722" font-family="var(--font-display)" font-size="12" fill="var(--ink)">"pending"</text>
+
+  <text x="320" y="758" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">The table stores five state names; the API reports four: pending, completed, failed, indeterminate.</text>
+</svg>
+</div></div><figcaption>One attempt's states as the code stores them. The service commits the claim before it unseals the key, so a failure after that point ends as failed or indeterminate and is never retried. Retrieve shows the three earlier states as pending.</figcaption></figure>
+
+<h3 id="s21">21. The account page, passkeys and devices</h3>
+<p><code>GET /account</code>, with your account cookie, shows what the service knows about you: your XID, your custody rung, and the passkeys enrolled on the account, each with its provider's icon where known, whether it is backed up to a cloud keychain, and when it was last used. The page is deliberately plain. The XID is the only name the service has for you, and there is no email, no username and no profile to fill in.</p>
+<p><strong>Adding a passkey</strong> requires the account cookie for that XID, obtained by signing in with a passkey you already have. A XID by itself is public information and lets nobody add anything. A passkey from a browser the account has never seen is simply unknown, and signing in with it leads to the recovery page of <a class="xref" href="part2.html#s10">section 10</a> rather than to any account. Both rules follow from one principle the service is built on: nothing about the account should be reachable with less than the account's own credential.</p>
+<p><strong>SSH and git keys</strong> can be registered as devices at <code>/devices/ssh_git</code>. You send the public key only, with an optional nickname, and the request must carry a fresh passkey assertion; a session that came from an ordinary OIDC login is refused. The key appears as a credential of kind <code>ssh_git</code> on the account and can be revoked. The private key never leaves your machine.</p>
+<p>The refusal follows the principle above. A device key, once listed, is a credential of the account, so adding one needs the account's own credential used freshly; an OIDC session proves only that a sign-in happened at some earlier moment.</p>
+<p><strong>The encapsulation key</strong> is the sealed X25519 half of your user key from <a class="xref" href="part4.html#s18">section 18</a>. It exists so that data can be encrypted <em>to you</em> by anyone who can read your document (the X25519 public half is published in it, which is how a sender finds the key), using IdentiKey's own construction from standard parts (X25519 key agreement, a BLAKE3 key derivation and XChaCha20-Poly1305 encryption), and so that shared secrets inside a group (a household, a team) can list you as a recipient. Three operations touch it, all at <code>/account/encapsulation/</code>:</p>
+<ul>
+<li>
+<p><code>begin</code> names the purpose, <code>export</code>, <code>unwrap</code> or <code>rewrap</code>, and returns a fresh challenge with a five-minute expiry. It needs the account cookie and, for <code>unwrap</code> and <code>rewrap</code>, the exact wrap bytes, whose digest is stored so that consent for one wrap cannot open another.</p>
+<p>A wrap, here, is a data key (the symmetric key that actually encrypts some content) encrypted to one recipient's X25519 public key. <code>unwrap</code> opens such a wrap for you; <code>rewrap</code> re-addresses one to someone else. The hosted service offers export and rewrap; unwrap exists in the key library but has no route on the service yet.</p>
+</li>
+<li>
+<p><code>export</code> returns the X25519 private scalar to you after a fresh passkey assertion or a signature from a key you hold. The export is written to the consent log, and the service keeps its copy until a later custody migration, which the companion Spec document describes, checks that record and destroys it.</p>
+</li>
+<li><code>rewrap</code> takes a data key wrapped to you and returns it wrapped to a <strong>friend</strong>, named by XID. The friend's X25519 public is read from their stored document, never supplied by the client. The data key and your scalar are decrypted inside the service and zeroized before the call returns; only the new wrap comes back. A returned wrap cannot be recalled, because once the friend holds it only their key is needed to open it: stopping that friend means choosing a new data key.</li>
+</ul>
+<figure class="ik-figure is-diagram" id="fig-encapsulation"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 856" role="img" aria-labelledby="enc-title">
+  <title id="enc-title">Encapsulation in three stages. Wrap: any sender picks a 32-byte data key, reads your X25519 public key from your XID document, and seals the data key to it with a fresh ephemeral X25519 key, a BLAKE3 key derivation labelled identikey-keyspace-v1-wrap and XChaCha20-Poly1305, giving a wrap addressed to you. Rewrap, inside IdentiKey: begin with the account cookie names the purpose rewrap, the wrap bytes and the friend's XID; the service stores the wrap's SHA-256 and the friend's X25519 public read from the friend's stored document, never from the client, and returns a five-minute challenge. You answer with a passkey assertion or an Elect-key signature. The rewrap call checks the wrap digest and that the friend's key is unchanged, marks the attempt used, opens the sealed scalar with the managed wrap key, opens the wrap to get the data key, seals the data key to the friend, zeroizes the data key and the scalar, logs encapsulation_rewrap and returns only the new wrap. Unwrap exists in the library but has no HTTP route on the hosted service. Open: the friend opens the new wrap with their own X25519 private key; it cannot be recalled, so cutting the friend off means a new data key.</title>
+  <defs>
+    <marker id="enc-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="enc-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="enc-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- 1. Wrap -->
+  <text x="30" y="26" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">1  Wrap: any sender, anywhere</text>
+
+  <rect x="30" y="40" width="250" height="50" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="155" y="61" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">data key DK</text>
+  <text x="155" y="79" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">32 bytes; it encrypts the content</text>
+
+  <rect x="360" y="40" width="250" height="50" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="485" y="61" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">your X25519 public</text>
+  <text x="485" y="79" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">read from your XID document</text>
+
+  <path d="M155 90 V108 H300 V122" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#enc-arrow-ink)"/>
+  <path d="M485 90 V108 H340 V122" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#enc-arrow-ink)"/>
+
+  <rect x="100" y="124" width="440" height="104" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="320" y="146" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">wrap → you</text>
+  <text x="320" y="166" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">a fresh ephemeral X25519 key agrees a secret with your public;</text>
+  <text x="320" y="182" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">BLAKE3 over identikey-keyspace-v1-wrap, that secret and both</text>
+  <text x="320" y="198" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">public keys gives the key that XChaCha20-Poly1305 seals DK with</text>
+  <text x="320" y="216" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">{alg, recipient, ephemeral, nonce, ciphertext, epoch}</text>
+
+  <line x1="320" y1="228" x2="320" y2="262" stroke="var(--accent)" stroke-width="2" marker-end="url(#enc-arrow-accent)"/>
+  <text x="334" y="250" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">you ask IdentiKey to pass it on</text>
+
+  <!-- service boundary -->
+  <rect x="20" y="266" width="600" height="452" rx="8" fill="var(--paper-2)" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="36" y="290" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)">2  Rewrap, inside IdentiKey</text>
+
+  <!-- begin -->
+  <rect x="40" y="302" width="560" height="84" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="322" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)">POST /account/encapsulation/begin</text>
+  <text x="56" y="340" font-family="var(--font-display)" font-size="12" fill="var(--ink)">with the account cookie: purpose rewrap, the wrap bytes, the friend's XID</text>
+  <text x="56" y="358" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">stores the wrap's SHA-256 and the friend's X25519 public, read from the</text>
+  <text x="56" y="374" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">friend's stored document; returns an attempt id and a 5-minute challenge</text>
+
+  <!-- refused input -->
+  <line x1="56" y1="408" x2="196" y2="408" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#enc-arrow-bad)"/>
+  <path d="M118 400 L134 416 M134 400 L118 416" fill="none" stroke="var(--bad)" stroke-width="2"/>
+  <text x="210" y="412" font-family="var(--font-display)" font-size="12" fill="var(--bad)">a friend's key from the client: never used, only the XID</text>
+
+  <!-- proof -->
+  <rect x="40" y="428" width="560" height="50" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="56" y="448" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">you consent: a passkey assertion (A3) or an Elect-key signature (A4)</text>
+  <text x="56" y="466" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">A4 signs a transcript tagged identikey-encapsulation-consent-v1</text>
+
+  <!-- rewrap call -->
+  <rect x="40" y="490" width="560" height="168" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="510" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)">POST /account/encapsulation/rewrap</text>
+  <text x="56" y="530" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the wrap must hash to the stored digest; the friend's key must be unchanged</text>
+  <text x="56" y="548" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the attempt is marked used: one rewrap per consent</text>
+  <text x="76" y="568" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">the managed wrap key opens the sealed IKEK blob: your X25519 scalar</text>
+  <text x="76" y="586" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">your scalar opens wrap → you: DK</text>
+  <text x="76" y="604" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">DK is sealed to the friend's public: wrap → friend</text>
+  <text x="76" y="622" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">DK and the scalar are zeroized</text>
+  <text x="56" y="644" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)">log: encapsulation_rewrap   audience = friend's XID</text>
+  <rect x="60" y="556" width="6" height="70" rx="3" fill="var(--warm)" stroke="none"/>
+
+  <!-- in the clear -->
+  <text x="590" y="586" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">DK and scalar in</text>
+  <text x="590" y="604" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">the clear only here</text>
+
+  <!-- unwrap note -->
+  <text x="36" y="682" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">unwrap (the same gate, returning DK to you) exists</text>
+  <text x="36" y="698" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">in the library; the hosted service has no route for it</text>
+
+  <!-- 3. Open -->
+  <line x1="540" y1="658" x2="540" y2="750" stroke="var(--accent)" stroke-width="2" marker-end="url(#enc-arrow-accent)"/>
+  <text x="526" y="740" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">only this is returned</text>
+  <text x="30" y="746" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">3  Open: the friend</text>
+
+  <rect x="300" y="752" width="310" height="50" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="455" y="773" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">wrap → friend</text>
+  <text x="455" y="791" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">opened with the friend's own X25519 key</text>
+
+  <text x="30" y="772" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">from here on, your</text>
+  <text x="30" y="788" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">consent is not involved</text>
+
+  <text x="320" y="834" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">It cannot be recalled. To cut the friend off, re-encrypt the content under a new data key.</text>
+</svg>
+</div></div><figcaption>Wrap, rewrap, open. The data key and your X25519 scalar are in the clear only inside the service, and the friend's public key comes from the friend's stored document. Unwrap uses the same consent gate but the hosted service has no route for it yet.</figcaption></figure>
+
+<p>Finally, <strong>recovery</strong>. If you lose your passkey and have no other, the service cannot help you back into the account, and the recovery page says so: a new account will not restore the old one. This is not an oversight. An emailed link that could restore access to a key would make the email provider the real holder of the key, and <a class="xref" href="part5.html">Part 5</a> names the rule that forbids it. Having more than one passkey, on more than one device or backed up to a keychain, is the account recovery story.</p>
+<h3 id="s22">22. Where every key lives</h3>
+<p>The table collects every key or secret the hosted service touches, so that the question "who holds what?" has one answer in one place.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Key or secret</th>
+<th>Algorithm</th>
+<th>Who holds the private half</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User signing key (inception)</td>
+<td>Schnorr, secp256k1</td>
+<td>nobody; discarded at signup</td>
+<td>Hashed into the XID. Holds <code>Elect</code>, <code>Transfer</code>, <code>Update</code>, <code>Verify</code> in the document.</td>
+</tr>
+<tr>
+<td>User encapsulation key</td>
+<td>X25519</td>
+<td>IdentiKey, sealed under the managed wrap key; exportable to you</td>
+<td>Recipient for data encrypted to you. Export, unwrap and rewrap on consent.</td>
+</tr>
+<tr>
+<td>Operational key</td>
+<td>Ed25519</td>
+<td>IdentiKey, sealed under the managed wrap key</td>
+<td>Holds <code>Sign</code> and <code>Auth</code>. Answers challenges in the <a class="xref" href="part4.html#s20">section 20</a> ceremony.</td>
+</tr>
+<tr>
+<td>Passkey</td>
+<td>P-256 or RSA (ES256 or RS256), inside your authenticator</td>
+<td>you</td>
+<td>A3 proof of presence to IdentiKey. Consent artifact for every managed signature.</td>
+</tr>
+<tr>
+<td>SSH or git device key</td>
+<td>any (the service does not check the algorithm)</td>
+<td>you</td>
+<td>Listed on the account as a credential.</td>
+</tr>
+<tr>
+<td>Managed wrap key</td>
+<td>XChaCha20-Poly1305 key, kid <code>v1</code></td>
+<td>IdentiKey, from the server environment</td>
+<td>Seals the operational seed and the encapsulation scalar.</td>
+</tr>
+<tr>
+<td>OIDC signing key</td>
+<td>Ed25519</td>
+<td>IdentiKey, from its environment, or a file in its data directory if none is set</td>
+<td>Signs ID tokens. Published in the JWKS.</td>
+</tr>
+<tr>
+<td>Pairwise salt</td>
+<td>32 random bytes</td>
+<td>IdentiKey, from its environment, or a file in its data directory if none is set; an exportable operator secret</td>
+<td>Derives pairwise subjects. Never rotated.</td>
+</tr>
+<tr>
+<td>Session key (Mjolnir bind)</td>
+<td>Ed25519, ephemeral</td>
+<td>the client program</td>
+<td>Bound to you by the bind signature in the challenge ceremony.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The pairwise salt is never rotated because every pairwise subject (<a class="xref" href="part2.html#s12">section 12</a>) is derived from it; a new salt would change the identifier that every app has stored for every user.</p>
+<p>Two rows carry the weight of Part 5. The operational key is why IdentiKey can act for you, and the ceremony and log are what constrain that. The inception key's row, with nobody in the holder column, is why the account is not yet what its document says it is.</p>
+<figure class="ik-figure is-diagram" id="fig-key-holders"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 760" role="img" aria-labelledby="kh-title">
+  <title id="kh-title">The keys by holder, in three zones. You hold your passkey (ES256 on P-256, or RS256, inside your authenticator) and any SSH or git device key; your client program holds the ephemeral Ed25519 session key. The IdentiKey server keeps in its database the managed key blob (the operational Ed25519 seed, holding Sign and Auth), the encapsulation key blob (your X25519 scalar) and an unsigned copy of your XID document; it takes the managed wrap key, which seals both blobs, from its environment; and it takes the OIDC signing key and the pairwise salt from its environment or from files in its data directory, publishing the signing key's public half as the only key in its JWKS. Nobody holds the inception key, which carries Elect, Transfer, Update and Verify: its private half is discarded at signup. Arrows show that every use of the operational key needs a fresh passkey assertion, and that the operational key signs the bind for the session key.</title>
+  <defs>
+    <marker id="kh-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="kh-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- zone: you -->
+  <rect x="16" y="14" width="608" height="166" rx="8" fill="var(--accent-soft)" stroke="none"/>
+  <text x="32" y="38" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)">You</text>
+  <text x="608" y="38" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">private halves that never reach the service</text>
+
+  <rect x="30" y="52" width="190" height="112" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="125" y="76" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">passkey</text>
+  <text x="125" y="96" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">ES256 (P-256) or RS256</text>
+  <text x="125" y="116" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">inside your authenticator</text>
+  <text x="125" y="134" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">public key on the account</text>
+  <text x="125" y="152" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">A3 proof of presence</text>
+
+  <rect x="230" y="52" width="180" height="112" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="76" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">SSH or git device key</text>
+  <text x="320" y="96" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">on your machine</text>
+  <text x="320" y="116" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">public half listed as an</text>
+  <text x="320" y="134" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">ssh_git credential</text>
+
+  <rect x="420" y="52" width="190" height="112" rx="4" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="515" y="72" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">client program</text>
+  <text x="515" y="96" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">session key</text>
+  <text x="515" y="116" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Ed25519, ephemeral</text>
+  <text x="515" y="136" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">bound to you for one</text>
+  <text x="515" y="152" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">operation and resource</text>
+
+  <!-- zone: IdentiKey server -->
+  <rect x="16" y="262" width="608" height="352" rx="8" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="608" y="282" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="end">IdentiKey server</text>
+
+  <!-- database -->
+  <rect x="30" y="290" width="580" height="148" rx="6" fill="var(--paper)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="596" y="310" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)" text-anchor="end">database</text>
+
+  <rect x="44" y="304" width="190" height="120" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="139" y="326" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">managed key blob</text>
+  <text x="139" y="346" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the operational key:</text>
+  <text x="139" y="364" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Ed25519 seed</text>
+  <text x="139" y="384" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Sign  Auth</text>
+  <text x="139" y="410" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">answers challenges</text>
+
+  <rect x="244" y="318" width="170" height="106" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="329" y="340" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">encapsulation key blob</text>
+  <text x="329" y="360" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">X25519 scalar</text>
+  <text x="329" y="380" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">data encrypted to you</text>
+  <text x="329" y="398" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">exportable to you</text>
+  <text x="329" y="414" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">on consent</text>
+
+  <rect x="424" y="318" width="172" height="106" rx="4" fill="var(--paper)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="510" y="340" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">XID document</text>
+  <text x="510" y="360" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">public halves and</text>
+  <text x="510" y="378" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">privileges only;</text>
+  <text x="510" y="396" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">stored unsigned</text>
+
+  <!-- cross-zone arrows -->
+  <line x1="90" y1="166" x2="90" y2="302" stroke="var(--accent)" stroke-width="2" marker-end="url(#kh-arrow-accent)"/>
+  <rect x="98" y="196" width="150" height="34" fill="var(--paper)" stroke="none"/>
+  <text x="104" y="209" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">a fresh assertion</text>
+  <text x="104" y="225" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">for every use</text>
+
+  <path d="M190 304 V250 H560 V170" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#kh-arrow-ink)"/>
+  <rect x="300" y="224" width="170" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="385" y="236" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">signs the session bind</text>
+
+  <!-- seals -->
+  <line x1="139" y1="478" x2="139" y2="430" stroke="var(--accent)" stroke-width="2" marker-end="url(#kh-arrow-accent)"/>
+  <path d="M220 478 V456 H329 V430" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#kh-arrow-accent)"/>
+  <rect x="236" y="440" width="76" height="14" fill="var(--paper-2)" stroke="none"/>
+  <text x="274" y="451" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">seals both</text>
+
+  <!-- environment -->
+  <rect x="30" y="478" width="250" height="122" rx="6" fill="var(--paper)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="44" y="498" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)">environment</text>
+  <text x="44" y="522" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">managed wrap key</text>
+  <text x="44" y="542" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">32 bytes, XChaCha20-Poly1305</text>
+  <text x="44" y="560" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">one key, key id <tspan font-family="var(--font-mono)">v1</tspan></text>
+  <text x="44" y="586" font-family="var(--font-mono)" font-size="12" fill="var(--ink-3)">IDENTIKEY_MANAGED_WRAP_KEY</text>
+
+  <rect x="290" y="478" width="320" height="122" rx="6" fill="var(--paper)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="304" y="498" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)">environment, or a file in the data directory</text>
+  <text x="304" y="522" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">OIDC signing key <tspan font-family="var(--font-mono)" font-size="12" font-weight="400">Ed25519</tspan></text>
+  <text x="304" y="540" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">signs ID tokens; its public half is</text>
+  <text x="304" y="556" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the only key in the JWKS</text>
+  <text x="304" y="578" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">pairwise salt <tspan font-family="var(--font-mono)" font-size="12" font-weight="400">32 bytes</tspan></text>
+  <text x="304" y="594" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">derives every pairwise subject</text>
+
+  <!-- zone: nobody -->
+  <rect x="16" y="636" width="608" height="110" rx="8" fill="none" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="32" y="660" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Nobody</text>
+  <text x="320" y="660" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">inception key (the user signing key)</text>
+  <text x="320" y="680" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Schnorr, secp256k1</text>
+  <text x="320" y="700" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink-3)" text-anchor="middle">Elect  Transfer  Update  Verify</text>
+  <text x="320" y="726" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">private half discarded at signup; only its public half, hashed into the XID, remains</text>
+</svg>
+</div></div><figcaption>The table as a map of who holds what. One managed wrap key seals both of the service's secrets, every use of the operational key needs a fresh passkey assertion, and the box for the inception key is empty.</figcaption></figure>
+<nav class="pager"><a class="prev" href="part3.html"><small>Previous</small>Part 3. The identifier underneath</a><a class="next" href="part5.html"><small>Next</small>Part 5. The custody ladder</a></nav>
+<footer class="site-footer"><p class="ik-note">Generated from <code>tutorials/identikey-tutorial-v3.md</code> on 2 Nov 2026 by <code>tutorials/web/build.py</code>. Interactives run entirely in your browser; nothing is sent anywhere.</p></footer>
+</main>
+<aside class="rail" aria-label="On this page"><h2>On this page</h2><ol></ol></aside>
+</div>
+<script src="assets/ikcrypto.js"></script>
+<script src="assets/widgets/challenge.js"></script><script src="assets/widgets/grid.js"></script><script src="assets/widgets/hash.js"></script><script src="assets/widgets/hashchain.js"></script><script src="assets/widgets/jwt.js"></script><script src="assets/widgets/oidcflow.js"></script><script src="assets/widgets/pairwise.js"></script><script src="assets/widgets/signverify.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

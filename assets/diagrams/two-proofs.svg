@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 600" role="img" aria-labelledby="tp-title">
+  <title id="tp-title">Two proofs, two grants: a passkey assertion, which says I hold a passkey registered at this provider, is an A3 proof bound to the provider's domain and enters only the authorization-code flow and the device flow; an identikey-auth Response, which says I hold this identity's key, is an A4 proof, a raw signature over dCBOR answering a nonce and bound to an audience, and enters only IdentiKey's challenge-response grant. Each proof is refused at the other's door. Both doors lead to the same token endpoint and the same three tokens.</title>
+  <defs>
+    <marker id="tp-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="tp-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="tp-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- the two proofs -->
+  <rect x="30" y="24" width="280" height="122" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="170" y="48" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">passkey assertion</text>
+  <text x="170" y="68" font-family="var(--font-display)" font-size="13" fill="var(--ink)" text-anchor="middle">"I hold a passkey registered at this provider"</text>
+  <text x="170" y="90" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)" text-anchor="middle">A3: authenticates you to a remote party</text>
+  <text x="170" y="108" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">bound to the provider's domain; via a browser</text>
+  <text x="170" y="126" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">counter and origin binding resist replay</text>
+
+  <rect x="330" y="24" width="280" height="122" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="470" y="48" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">identikey-auth Response</text>
+  <text x="470" y="68" font-family="var(--font-display)" font-size="13" fill="var(--ink)" text-anchor="middle">"I hold this identity's key"</text>
+  <text x="470" y="90" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)" text-anchor="middle">A4: raw dCBOR signature answering a nonce</text>
+  <text x="470" y="108" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">bound to an audience; refuses downgrades</text>
+  <text x="470" y="126" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">checked against your XID document's key</text>
+
+  <!-- accepted paths -->
+  <line x1="120" y1="148" x2="120" y2="236" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#tp-arrow-ink)"/>
+  <line x1="520" y1="148" x2="520" y2="236" stroke="var(--accent)" stroke-width="2" marker-end="url(#tp-arrow-accent)"/>
+  <text x="112" y="196" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">accepted</text>
+  <text x="528" y="196" font-family="var(--font-display)" font-size="12" fill="var(--accent)">accepted</text>
+
+  <!-- refused paths, crossing -->
+  <line x1="220" y1="148" x2="420" y2="236" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#tp-arrow-bad)"/>
+  <line x1="420" y1="148" x2="220" y2="236" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#tp-arrow-bad)"/>
+  <rect x="222" y="181" width="196" height="20" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="196" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">refused at the other's door</text>
+
+  <!-- the two doors -->
+  <rect x="30" y="240" width="280" height="102" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="170" y="264" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">the passkey's two doors</text>
+  <text x="170" y="288" font-family="var(--font-display)" font-size="13" fill="var(--ink)" text-anchor="middle">authorization-code flow</text>
+  <text x="170" y="304" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">section 10</text>
+  <text x="170" y="324" font-family="var(--font-display)" font-size="13" fill="var(--ink)" text-anchor="middle">device flow</text>
+  <text x="170" y="338" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">section 11</text>
+
+  <rect x="330" y="240" width="280" height="102" rx="6" fill="var(--paper-2)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="470" y="264" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">IdentiKey's own grant</text>
+  <text x="470" y="284" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">urn:identikey:params:oauth:</text>
+  <text x="470" y="300" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">grant-type:challenge-response</text>
+  <text x="470" y="320" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">GET /challenge, then POST /token</text>
+  <text x="470" y="336" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">section 25; opt-in per client</text>
+
+  <!-- to the token endpoint -->
+  <path d="M170 344 V366 H260 V386" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#tp-arrow-ink)"/>
+  <path d="M470 344 V366 H380 V386" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#tp-arrow-accent)"/>
+
+  <rect x="140" y="390" width="360" height="56" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="413" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">the same token endpoint</text>
+  <text x="320" y="433" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">each proof reaches it through exactly one door</text>
+
+  <line x1="320" y1="448" x2="320" y2="472" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#tp-arrow-ink)"/>
+
+  <!-- the same three tokens -->
+  <text x="320" y="492" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">the same three tokens</text>
+  <rect x="140" y="500" width="110" height="34" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="195" y="522" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">ID token</text>
+  <rect x="265" y="500" width="110" height="34" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="522" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">access token</text>
+  <rect x="390" y="500" width="110" height="34" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="445" y="522" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">refresh token</text>
+
+  <!-- why -->
+  <text x="320" y="566" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">A passkey holds Auth. The key that answers a Challenge may hold Sign, Elect and Transfer.</text>
+  <text x="320" y="584" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">If both minted identical tokens, an Auth-only credential would look like full key authority.</text>
+</svg>

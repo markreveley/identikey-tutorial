@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 700" role="img" aria-labelledby="lad-title">
+  <title id="lad-title">The custody ladder: five rungs from C0 Throwaway at the bottom through C1 Custodial, C2 Managed and C3 Self-custody with assisted recovery to C4 Self-custody, sole at the top, each answering who can produce a signature with your key. C1 and C2 are the hosted service today; the line between them separates a service that can sign without you from one that cannot sign without your logged, authenticated instruction. The intended direction of travel runs from C1 up to C3, the goal.</title>
+  <defs>
+    <marker id="lad-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="lad-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <text x="130" y="34" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Who can produce a signature with your key?</text>
+
+  <!-- hosted service band around C1 and C2 -->
+  <rect x="120" y="266" width="500" height="266" rx="8" fill="var(--accent-soft)" stroke="none"/>
+  <text x="604" y="399" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle" transform="rotate(-90 604 399)">hosted service today</text>
+
+  <!-- C4 -->
+  <rect x="130" y="60" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="146" y="88" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)">C4</text>
+  <text x="190" y="88" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Self-custody, sole</text>
+  <text x="190" y="110" font-family="var(--font-display)" font-size="13" fill="var(--ink)">only you</text>
+  <text x="190" y="128" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: none</text>
+  <text x="190" y="146" font-family="var(--font-display)" font-size="12" fill="var(--ink-3)">Be your own bank. Available on purpose, never the default.</text>
+
+  <!-- C3 -->
+  <rect x="130" y="168" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="146" y="196" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--accent)">C3</text>
+  <text x="190" y="196" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Self-custody, assisted recovery</text>
+  <rect x="490" y="180" width="66" height="22" rx="11" fill="var(--accent)" stroke="none"/>
+  <text x="523" y="195" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent-ink)" text-anchor="middle">the goal</text>
+  <text x="190" y="218" font-family="var(--font-display)" font-size="13" fill="var(--ink)">only you</text>
+  <text x="190" y="236" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: a quorum of guardians you chose</text>
+  <text x="190" y="254" font-family="var(--font-display)" font-size="12" fill="var(--ink-3)">The recommended destination: survives a lost phone.</text>
+
+  <!-- C2 -->
+  <rect x="130" y="276" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="146" y="304" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)">C2</text>
+  <text x="190" y="304" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Managed</text>
+  <text x="190" y="326" font-family="var(--font-display)" font-size="13" fill="var(--ink)">the service, but only on your authenticated instruction,</text>
+  <text x="190" y="344" font-family="var(--font-display)" font-size="13" fill="var(--ink)">with a logged consent record</text>
+  <text x="190" y="362" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: the service restores access</text>
+
+  <!-- the line between C1 and C2 -->
+  <text x="350" y="390" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">cannot sign without your logged, authenticated instruction</text>
+  <line x1="130" y1="398" x2="570" y2="398" stroke="var(--ink)" stroke-width="2"/>
+  <text x="350" y="413" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">can sign without you</text>
+
+  <!-- C1 -->
+  <rect x="130" y="422" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="146" y="450" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)">C1</text>
+  <text x="190" y="450" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Custodial</text>
+  <text x="190" y="472" font-family="var(--font-display)" font-size="13" fill="var(--bad)">the service, unilaterally</text>
+  <text x="190" y="490" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: the service restores access</text>
+  <text x="190" y="508" font-family="var(--font-display)" font-size="12" fill="var(--ink-3)">A traditional account; most "web3 login" products are this.</text>
+
+  <!-- C0 -->
+  <rect x="130" y="546" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="146" y="574" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)">C0</text>
+  <text x="190" y="574" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Throwaway</text>
+  <text x="190" y="596" font-family="var(--font-display)" font-size="13" fill="var(--ink)">you, until you lose it</text>
+  <text x="190" y="614" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: none, by design</text>
+  <text x="190" y="632" font-family="var(--font-display)" font-size="12" fill="var(--ink-3)">Ephemeral or semi-anonymous; a destination, not a failure.</text>
+
+  <!-- direction of travel: C1 up to C3 -->
+  <line x1="70" y1="470" x2="70" y2="222" stroke="var(--accent)" stroke-width="2" marker-end="url(#lad-arrow-accent)"/>
+  <text x="54" y="346" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle" transform="rotate(-90 54 346)">intended direction of travel</text>
+
+  <text x="350" y="666" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">C3, not C4, is the goal: assisted recovery is what makes self-custody</text>
+  <text x="350" y="682" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">survivable for people who are not cryptographers.</text>
+</svg>

@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Part 3. The identifier underneath · IdentiKey tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="index.html"><span class="brand-long">IdentiKey, from the ground up</span><span class="brand-short">IdentiKey</span></a><nav aria-label="Parts"><a href="index.html">Start</a><a href="part1.html">Part 1</a><a href="part2.html">Part 2</a><a href="part3.html" aria-current="page">Part 3</a><a href="part4.html">Part 4</a><a href="part5.html">Part 5</a><a href="glossary.html">Glossary</a></nav></div></header>
+<div class="page">
+<main class="prose">
+<p class="kicker">Part 3</p><h1 id="part-3-the-identifier-underneath">The identifier underneath</h1>
+<p>Every sign-in in <a class="xref" href="part2.html">Part 2</a> ended with a subject, and the pairwise subject (<a class="xref" href="part2.html#s12">section 12</a>) was derived from something called the XID. This part is about that something. The XID is the one identifier that never changes for an account, and the design choices around it (what it is a hash of, what document describes it, how that document changes, and how anyone fetches the current version) are what make IdentiKey different from an ordinary identity provider rather than merely a well-behaved one.</p>
+<h3 id="s13">13. The XID: an identifier that is a hash</h3>
+<p>Most systems identify you by a row in their database. The identifier is whatever the database handed out, it means nothing outside that database, and if the operator disappears so does the meaning. IdentiKey instead identifies you by a <strong>XID</strong>, an eXtensible IDentifier from the Blockchain Commons Gordian stack: thirty-two bytes that are the SHA-256 hash of the canonical CBOR encoding of your <strong>inception key</strong>, the public signing key that existed when the identity was created.</p>
+<p><strong>CBOR</strong> (Concise Binary Object Representation) is a compact binary data format in the same family as JSON, and <em>canonical</em> means the key is encoded by fixed rules, so that one key has exactly one byte sequence and therefore exactly one hash; without that rule two encoders could write the same key differently and compute two different XIDs for it. <a class="xref" href="part3.html#s14">Section 14</a> meets the same rule again under the name dCBOR. Who generates the inception key, and where it is kept, is a <a class="xref" href="part4.html">Part 4</a> matter.</p>
+<p>That definition has consequences worth taking one at a time.</p>
+<ul>
+<li><strong>It is self-certifying.</strong> Given a XID and a candidate inception key, anyone can recompute the hash and check that they match: encode the candidate key in canonical CBOR, run SHA-256 over those bytes, and compare the result with the XID byte for byte. No registry needs to vouch for the binding.</li>
+<li><strong>It is globally unique without coordination.</strong> Two different keys hash to the same value with probability so small it can be treated as zero; that is the collision resistance of <a class="xref" href="part1.html#s2">section 2</a> doing the work a registry would otherwise do. No one allocates XIDs.</li>
+<li><strong>It belongs to whoever held the inception key</strong>, not to whoever runs the server. The identifier would be exactly as valid if the server never existed.</li>
+<li><strong>It is stable across key changes.</strong> The hash is of the inception key, not the current key. You can rotate every key you own and the XID does not move, because the inception key is a historical fact, not a live secret. <a class="xref" href="part3.html#s15">Section 15</a> explains how rotation works and why this choice was made over the obvious alternative of hashing the current key.</li>
+</ul>
+<figure class="ik-figure is-diagram" id="fig-xid"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 580" role="img" aria-labelledby="xid-title">
+  <title id="xid-title">How a XID is made: the inception key is encoded as canonical CBOR, hashed with SHA-256 into 32 bytes, and written as base58btc text.</title>
+  <defs>
+    <marker id="xid-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+<marker id="xid-arrow-ink-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+  </defs>
+
+  <!-- 1 inception key -->
+  <rect x="40" y="30" width="300" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="190" y="53" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">inception key</text>
+  <text x="190" y="72" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">public half of the first signing key</text>
+
+  <line x1="190" y1="88" x2="190" y2="142" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#xid-arrow-ink-2)"/>
+  <text x="202" y="120" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">encode</text>
+
+  <!-- 2 canonical CBOR -->
+  <rect x="40" y="146" width="300" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="190" y="169" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">canonical CBOR bytes</text>
+  <text x="190" y="188" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">exactly one byte sequence for this key</text>
+
+  <line x1="190" y1="204" x2="190" y2="258" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#xid-arrow-ink-2)"/>
+  <text x="202" y="236" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">hash</text>
+
+  <!-- 3 SHA-256 -->
+  <rect x="40" y="262" width="300" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="190" y="285" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-256</text>
+  <text x="190" y="304" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">one-way, fixed length</text>
+
+  <line x1="190" y1="320" x2="190" y2="374" stroke="var(--accent)" stroke-width="2" marker-end="url(#xid-arrow-accent)"/>
+
+  <!-- 4 the XID -->
+  <rect x="40" y="378" width="300" height="56" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="190" y="401" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">XID</text>
+  <text x="190" y="420" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">32 bytes, never changes for this identity</text>
+
+  <line x1="190" y1="436" x2="190" y2="490" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#xid-arrow-ink-2)"/>
+  <text x="202" y="468" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">write as text</text>
+
+  <!-- 5 base58btc -->
+  <rect x="40" y="494" width="300" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="190" y="517" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">base58btc text</text>
+  <text x="190" y="536" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">3dLGACrVKP67MtW4kwbG…</text>
+
+  <!-- side note -->
+  <line x1="372" y1="262" x2="372" y2="434" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="388" y="290" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">Same input, same XID.</text>
+  <text x="388" y="310" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">Given a XID and a key,</text>
+  <text x="388" y="326" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">anyone can recompute</text>
+  <text x="388" y="342" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the hash and check</text>
+  <text x="388" y="358" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">that they match.</text>
+  <text x="388" y="386" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">No registry needed.</text>
+  <text x="388" y="406" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">No one allocates XIDs,</text>
+  <text x="388" y="422" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">and no server vouches.</text>
+</svg>
+</div></div><figcaption>How a XID is made: the inception key's public half, encoded canonically, hashed with SHA-256, written in base58btc.</figcaption></figure>
+
+<p>In text a XID is written in <strong>base58btc</strong>, the alphabet Bitcoin uses for addresses, which avoids the characters <code>0</code>, <code>O</code>, <code>I</code> and <code>l</code> that are easy to confuse. The same bytes can be written in hex, and the code (IdentiKey's own server) provides that form, but hex is a diagnostic form and never the identifier an app or a person should use. A XID looks like <code>3dLGACrVKP67MtW4kwbG54JqBGS5nSb46uZVkJNueWKJ</code>.</p>
+<p>The XID is the primary key of an account in the provider's database, the <code>user.name</code> shown when a passkey is created (<a class="xref" href="part1.html#s7">section 7</a>), the public subject for clients registered that way (<a class="xref" href="part2.html#s12">section 12</a>), and the input to every pairwise subject (HKDF over the XID and the app's sector, <a class="xref" href="part2.html#s12">section 12</a>). One identifier underlies everything, and it is not one the provider invented.</p>
+<h3 id="s14">14. The XID document and privileges</h3>
+<p>A bare hash says nothing about which keys are currently yours. That job belongs to the <strong>XID document</strong>: a structured record that lists the identity's keys and what each key is allowed to do, and that can also be signed and can record where the document can be fetched and how it has changed over time.</p>
+<p>The format lets a document be signed with one of the identity's own keys, never with IdentiKey's service signing keys (the JWKS of <a class="xref" href="part2.html#s9">section 9</a>), so that anyone who verifies it is checking it against the identity, not against the provider. The document IdentiKey creates at signup is not signed yet: it holds the identity's two keys and their privileges and nothing else, and IdentiKey stores it and serves it at /.well-known/xid/ followed by the XID. A signature, a list of resolvers (<a class="xref" href="part3.html#s16">section 16</a>) and provenance marks are what the format supports and what the higher rungs of the custody ladder use (<a class="xref" href="part5.html#s23">section 23</a>); an account cannot move to self-custody (C3) without a signature from the identity's own governing key.</p>
+<p>The document is a <strong>Gordian Envelope</strong>, a format for nested, signed and selectively-revealable data (parts of an envelope can be withheld, each withheld part being replaced by its hash, and the signature over the whole still verifies), encoded in <strong>dCBOR</strong> (deterministic CBOR, so there is exactly one byte sequence for any given content, which is the property signatures need, because a signature verifies only against the exact bytes it was made over, <a class="xref" href="part1.html#s4">section 4</a>). You do not have to know the encoding to use the system, but it explains two things you will see: the document is served as <code>application/cbor</code> rather than JSON, and whole envelopes shared in a chat or QR code are written in a <code>ur:envelope/…</code> text form (UR, for Uniform Resource, is the Gordian scheme for writing binary data as plain text that survives a QR code or a copy and paste).</p>
+<p>Inside the document, each key carries a set of <strong>privileges</strong>. Think of them as the verbs the key may perform on behalf of the identity:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Privilege</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Sign</code></td>
+<td>Produce signatures as this identity in day-to-day use.</td>
+</tr>
+<tr>
+<td><code>Auth</code></td>
+<td>Authenticate as this identity, for example to answer a challenge. Written 'Authorize' when a document is printed in envelope notation.</td>
+</tr>
+<tr>
+<td><code>Elect</code></td>
+<td>Add or remove other keys. This is the rotation privilege.</td>
+</tr>
+<tr>
+<td><code>Transfer</code></td>
+<td>Remove the inception key itself, handing the identity entirely to successors.</td>
+</tr>
+<tr>
+<td><code>Update</code></td>
+<td>Change the document, including its list of resolvers (<a class="xref" href="part3.html#s16">section 16</a>).</td>
+</tr>
+<tr>
+<td><code>Verify</code></td>
+<td>Verify on behalf of the identity.</td>
+</tr>
+<tr>
+<td><code>Delegate</code>, <code>Revoke</code>, <code>Burn</code></td>
+<td>Issue delegations, revoke them, and destroy the identity.</td>
+</tr>
+<tr>
+<td><code>All</code></td>
+<td>Every privilege at once.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The split that matters most is between <strong>doing</strong> and <strong>governing</strong>. <code>Sign</code> and <code>Auth</code> are the privileges needed every day: sign a message, answer a login challenge. <code>Elect</code>, <code>Transfer</code> and <code>Update</code> are the privileges that decide which keys exist at all. A key with <code>Sign</code> and <code>Auth</code> but not <code>Elect</code> can act as you but cannot replace you. A key with <code>Elect</code> and nothing else cannot act as you day to day but can decide who does. <a class="xref" href="part4.html">Part 4</a> shows how IdentiKey assigns these to different keys so that holding the signing key does not mean owning the identity, and <a class="xref" href="part5.html">Part 5</a> shows why that split is the foundation the whole custody ladder (the sequence of arrangements for who holds a user's keys, from IdentiKey holding them on the user's behalf to the user holding them alone, laid out in <a class="xref" href="part5.html#s23">section 23</a>) stands on.</p>
+<figure class="ik-figure is-diagram" id="fig-privileges"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 430" role="img" aria-labelledby="priv-title">
+  <title id="priv-title">Doing versus governing: the XID document lists a user key with Elect, Transfer, Verify and Update, which governs the key graph, and an operational key with Sign and Auth, which does the daily work.</title>
+  <defs>
+    <marker id="priv-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+<marker id="priv-arrow-ink-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+  </defs>
+
+  <!-- the XID document -->
+  <rect x="30" y="30" width="540" height="190" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="46" y="54" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">XID document</text>
+  <text x="554" y="54" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">signed; lists each key and its privileges</text>
+
+  <!-- user key: governing -->
+  <rect x="46" y="70" width="250" height="130" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="171" y="95" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">user key</text>
+  <text x="171" y="118" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Elect Transfer Verify Update</text>
+  <text x="171" y="150" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">governing</text>
+  <text x="171" y="170" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">held by the user</text>
+  <text x="171" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">not by IdentiKey</text>
+
+  <!-- operational key: doing -->
+  <rect x="304" y="70" width="250" height="130" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="429" y="95" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">operational key</text>
+  <text x="429" y="118" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Sign Auth</text>
+  <text x="429" y="150" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">doing</text>
+  <text x="429" y="170" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">held by IdentiKey</text>
+  <text x="429" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">for the hosted account</text>
+
+  <!-- what each key may do -->
+  <line x1="171" y1="222" x2="171" y2="276" stroke="var(--accent)" stroke-width="2" marker-end="url(#priv-arrow-accent)"/>
+  <rect x="46" y="280" width="250" height="60" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="171" y="305" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">change the key graph</text>
+  <text x="171" y="325" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">rotate keys, transfer the identity</text>
+
+  <line x1="429" y1="222" x2="429" y2="276" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#priv-arrow-ink-2)"/>
+  <rect x="304" y="280" width="250" height="60" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="429" y="305" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">sign challenges, authenticate</text>
+  <text x="429" y="325" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">act as the identity day to day</text>
+
+  <!-- note -->
+  <text x="300" y="384" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">Only the governing key can add or remove keys.</text>
+  <text x="300" y="404" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">A key with Sign and Auth can act as you; it cannot replace you.</text>
+</svg>
+</div></div><figcaption>Doing versus governing. The operational key signs and authenticates every day; the governing key, which IdentiKey never holds, is the only one that can change the key graph.</figcaption></figure>
+
+<p>Two more fields matter later. <strong>Resolution methods</strong> are URIs, inside the document, where the current version can be fetched. <strong>Provenance marks</strong> form a verifiable chain from one revision to the next, so given two versions of a document anyone can tell which is newer and whether both descend from the same history. Each mark carries a sequence number and a hash that commits to the key the next mark will reveal, so a revision cannot be inserted, dropped or reordered without breaking the link. Both are the subject of <a class="xref" href="part3.html#s16">section 16</a>.</p>
+<figure class="ik-figure is-example" id="fig-xid-doc"><div class="ik-body"><div class="ex-title">What a XID document looks like (Gordian Envelope notation, as bc-xid prints it)</div><pre><code class="language-text">// a hosted document, as signup creates it: 243 bytes, served as application/cbor
+XID(fcb11431) [
+    'key': PublicKeys(63246011, SigningPublicKey(fcb11431, SchnorrPublicKey(8c3539aa)), EncapsulationPublicKey(12653aee, X25519PublicKey(12653aee))) [
+        'allow': 'Elect'
+        'allow': 'Transfer'
+        'allow': 'Update'
+        'allow': 'Verify'
+    ]
+    'key': PublicKeys(c7bfa9e1, SigningPublicKey(591439c9, Ed25519PublicKey(fc24ca2b)), EncapsulationPublicKey(36f4d5e4, X25519PublicKey(36f4d5e4))) [
+        'allow': 'Authorize'
+        'allow': 'Sign'
+    ]
+]
+</code></pre>
+<pre><code class="language-text">// what the format can also carry (higher custody rungs; not in hosted documents today)
+// assembled from bc-xid's test outputs: a resolution method, a provenance mark, a signature
+{
+    XID(71274df1) [
+        'dereferenceVia': URI(https://resolver.example.com)
+        'key': PublicKeys(eb9b1cae, SigningPublicKey(71274df1, SchnorrPublicKey(9022010e)), EncapsulationPublicKey(b4f7059a, X25519PublicKey(b4f7059a))) [
+            'allow': 'All'
+        ]
+        'provenance': ProvenanceMark(8aeb51a12cad99493e0ff50c878b7819b5b6c4b52f30fae5e345cfbdb067a36e)
+    ]
+} [
+    'signed': Signature
+]
+</code></pre>
+<p class="ik-note" style="padding:0.5rem 1rem 0.75rem">In both, the XID and the first key's signing key share a digest prefix: the XID is the hash of that key.</p></div><figcaption>A hosted XID document as bc-xid prints it: the two keys and their privileges, unsigned, with no resolution method or provenance mark. The second block, from the library's tests, shows the signature, resolver and provenance mark the format supports for the higher custody rungs; the privilege the text calls Auth prints as 'Authorize'.</figcaption></figure>
+
+<p>The library IdentiKey uses for all of this is Blockchain Commons' <code>bc-xid</code>, with <code>bc-components</code> underneath providing the key types and the XID itself. IdentiKey adds its own enforcement around the privilege model. The library, as a general tool, will let any code holding a document in memory add a key to it. IdentiKey's rule is that a change to the key graph (the document's set of keys and the privileges attached to each) is applied only when it was authorized by a key that already holds <code>Elect</code>, and that the inception private key is never kept around after the privileges have been split between separate keys (<a class="xref" href="part4.html">Part 4</a>). Without those two rules the privilege split would be decorative.</p>
+<p>The first rule is checked against the current document, not the proposed one: the key that signed the new revision must already hold <code>Elect</code> in the version being replaced, otherwise a revision could grant itself the privilege it needs. The second rule exists because the inception key's hash is the XID itself, so anyone holding that private key holds the root authority every other key descends from and could sign a competing history for the same XID; destroying it once successors exist is what makes the split binding.</p>
+<h3 id="s15">15. Key rotation</h3>
+<p>Keys do not last forever. A device is lost, a key is suspected compromised, an algorithm is retired, or a device is replaced by a newer one. <strong>Rotation</strong> is the act of adding a new key to the identity and retiring an old one, and the XID document is where it happens: a key holding <code>Elect</code> signs a new revision of the document that lists the new key and drops the old, the provenance chain records the step, and the XID itself is untouched.</p>
+<p>The new revision is then stored and served by the provider at its well-known address, and at the self-custody rungs published at the resolvers the document names (<a class="xref" href="part3.html#s16">section 16</a>), which is how every other party learns of the change: a verifier that fetches the document afterwards sees the new key listed and the old one gone, and a signature made with the retired key no longer matches any key the document grants <code>Sign</code> or <code>Auth</code>.</p>
+<p>This is the reason the XID hashes the inception key rather than the current one. If the identifier were a fingerprint of the current key, every rotation would be an identity break: every app would see a new subject (the subject is derived from the identifier, <a class="xref" href="part2.html#s12">section 12</a>) and every relationship would have to be re-established. That would be bad enough as a response to a lost phone. It becomes untenable once you notice that the move to <strong>post-quantum</strong> signatures is a rotation that is already scheduled. The signature schemes in use today (Ed25519 among them) are expected to fall to large quantum computers, and the replacement family (ML-DSA, standardised as FIPS 204) is already supported in the <code>identikey-auth</code> protocol library in a hybrid Ed25519 plus ML-DSA mode. Moving to post-quantum keys rotates every key in the system on a known future date. An identity scheme that broke on that date would have a built-in expiry. One that hashes the inception key does not.</p>
+<p>A second idea from the key-management literature is <strong>pre-rotation</strong>: committing in advance, inside the current document, to the hash of the next key, so that even an attacker who steals the current key cannot rotate the identity to a key of their choosing: a rotation is accepted only if the incoming key hashes to the value committed in the previous revision, and the attacker holds no key that does. IdentiKey supports the idea with a deliberate condition attached. Pre-rotation only helps when the committed successor lives somewhere materially separate from the current key: a second device, a hardware token, or shares held by other people. If the successor sits in the same enclave behind the same unlock, it is exposed to the same compromise and protects nothing, while adding a new way to lose the identity, because losing the committed successor freezes the identity to its current key forever. So pre-rotation is off by default at every rung of the custody ladder (<a class="xref" href="part5.html#s23">section 23</a>), and by design the software will enable it only once a genuinely separate successor custody exists; the current version does not implement pre-rotation. It is a consequence of a structural choice, not a checkbox.</p>
+<figure class="ik-figure is-diagram" id="fig-rotation"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="rot-title">
+  <title id="rot-title">Rotation and pre-rotation: each document revision is signed by the previous Elect key and commits to the hash of the next one, so a forged revision whose key does not match the committed hash is refused.</title>
+  <defs>
+    <marker id="rot-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+<marker id="rot-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- v1 -->
+  <rect x="40" y="30" width="300" height="90" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="54" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">v1</text>
+  <text x="324" y="54" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">signed by E1, the inception key</text>
+  <text x="56" y="80" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">Elect key<tspan x="156">E1</tspan></text>
+  <text x="56" y="102" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">next<tspan x="156">hash(E2)</tspan></text>
+
+  <!-- v1 -> v2 -->
+  <line x1="190" y1="122" x2="190" y2="186" stroke="var(--accent)" stroke-width="2" marker-end="url(#rot-arrow-accent)"/>
+  <text x="204" y="150" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">provenance mark</text>
+  <text x="204" y="166" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">v2 descends from v1</text>
+
+  <!-- v2 -->
+  <rect x="40" y="190" width="300" height="90" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="214" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">v2</text>
+  <text x="324" y="214" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">signed by E1</text>
+  <text x="56" y="240" font-family="var(--font-mono)" font-size="12" fill="var(--warm)">Elect key<tspan x="156">E2</tspan></text>
+  <text x="56" y="262" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">next<tspan x="156">hash(E3)</tspan></text>
+
+  <!-- v2 -> v3 -->
+  <line x1="190" y1="282" x2="190" y2="346" stroke="var(--accent)" stroke-width="2" marker-end="url(#rot-arrow-accent)"/>
+  <text x="204" y="310" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">provenance mark</text>
+  <text x="204" y="326" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">v3 descends from v2</text>
+
+  <!-- v3 -->
+  <rect x="40" y="350" width="300" height="90" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="374" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">v3</text>
+  <text x="324" y="374" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">signed by E2</text>
+  <text x="56" y="400" font-family="var(--font-mono)" font-size="12" fill="var(--warm)">Elect key<tspan x="156">E3</tspan></text>
+  <text x="56" y="422" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">next<tspan x="156">hash(E4)</tspan></text>
+
+  <!-- pre-rotation note, beside v1 -->
+  <text x="364" y="80" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">pre-rotation</text>
+  <text x="364" y="98" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">each revision commits to</text>
+  <text x="364" y="114" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">hash(next Elect key)</text>
+
+  <!-- forged branch from v2 -->
+  <path d="M342 250 C 400 250, 420 300, 456 346" fill="none" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#rot-arrow-bad)"/>
+  <line x1="398" y1="276" x2="416" y2="294" stroke="var(--bad)" stroke-width="2"/>
+  <line x1="416" y1="276" x2="398" y2="294" stroke="var(--bad)" stroke-width="2"/>
+
+  <rect x="364" y="350" width="216" height="90" rx="4" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="380" y="374" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--bad)">v3'  forged</text>
+  <text x="564" y="374" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="end">stolen E2 signs</text>
+  <text x="380" y="400" font-family="var(--font-mono)" font-size="12" fill="var(--bad)">Elect key<tspan x="480">A</tspan></text>
+  <text x="380" y="422" font-family="var(--font-mono)" font-size="12" fill="var(--bad)">hash(A) ≠ hash(E3)</text>
+
+  <text x="472" y="464" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">refused</text>
+  <text x="472" y="482" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">key does not match the</text>
+  <text x="472" y="498" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">hash committed in v2</text>
+
+  <!-- what stays the same -->
+  <text x="190" y="470" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">The XID does not move.</text>
+  <text x="190" y="490" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">It hashes the inception key E1,</text>
+  <text x="190" y="506" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">not the current Elect key.</text>
+
+  <text x="300" y="560" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Rotation: the key holding Elect signs a new revision that adds a key and drops the old one.</text>
+  <text x="300" y="578" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Pre-rotation only helps when the next key lives somewhere separate.</text>
+</svg>
+</div></div><figcaption>Rotation and pre-rotation, as the format is designed to work. Each revision of the document is signed by the previous Elect key and commits to the hash of the next one, so the chain can be checked but not hijacked. The hosted service does not sign its documents or pre-rotate yet.</figcaption></figure>
+
+<p>Which key holds <code>Elect</code> for an account created through the hosted sign-up is the single most important fact about IdentiKey as it stands, and <a class="xref" href="part4.html#s18">section 18</a> states it precisely.</p>
+<h3 id="s16">16. Resolution and freshness</h3>
+<p>A signed document is only useful if the party checking a signature can obtain the <strong>current</strong> version. Fetching it is called <strong>resolution</strong>, and IdentiKey serves every account's document at a well-known path:</p>
+<pre><code>GET https://auth.identikey.me/.well-known/xid/&lt;xid in base58btc&gt;
+→ 200, Content-Type: application/cbor
+ ETag: &quot;&lt;sha-256 of the bytes, hex&gt;&quot;
+ Cache-Control: max-age=60, must-revalidate
+</code></pre>
+<p>A client that already holds a copy can send the ETag back in <code>If-None-Match</code> and receive <code>304 Not Modified</code> when nothing has changed. The sixty-second cache limit is short on purpose, for a reason that is easy to miss and shapes the rest of this section.</p>
+<p>A resolver cannot forge a document, because it cannot produce the signature. But it can serve an <strong>old</strong> one. Suppose your key K1 is compromised and you rotate to K2. The previous document is still correctly signed and still lists K1 as current. A resolver that serves it, whether out of malice or a stale cache, is presenting the attacker's key as yours, and nobody checking signatures can tell the difference. Withholding an update has the same effect as authorizing the attacker. Freshness is therefore a security property, not merely a convenience, and the design treats staleness as something to detect rather than something to assume away.</p>
+<p>IdentiKey's resolution model, taken as a pattern from the KERI key-management system (Key Event Receipt Infrastructure, a design in which an identifier's key history is a signed, hash-chained log of events served by several independent witnesses) while declining its software stack, has five parts:</p>
+<figure class="ik-figure is-diagram" id="fig-resolution"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="res-title">
+  <title id="res-title">Resolution: the signed XID document names its resolvers; a client fetches from K of N of them, compares the versions by provenance mark, accepts the newest version the quorum agrees on, and fails closed on a stale or forked answer.</title>
+  <defs>
+    <marker id="res-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+<marker id="res-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- the signed document names its resolvers -->
+  <rect x="150" y="30" width="300" height="64" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="300" y="52" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">XID document, signed</text>
+  <text x="300" y="70" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">names its own resolvers (resolution methods)</text>
+  <text x="300" y="86" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">R1  R2  R3</text>
+
+  <line x1="300" y1="96" x2="120" y2="150" stroke="var(--rule)" stroke-width="1.5"/>
+  <line x1="300" y1="96" x2="300" y2="150" stroke="var(--rule)" stroke-width="1.5"/>
+  <line x1="300" y1="96" x2="480" y2="150" stroke="var(--rule)" stroke-width="1.5"/>
+
+  <!-- resolvers -->
+  <rect x="40" y="152" width="160" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="120" y="175" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">R1</text>
+  <text x="120" y="194" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">resolver run by IdentiKey</text>
+
+  <rect x="220" y="152" width="160" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="300" y="175" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">R2</text>
+  <text x="300" y="194" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">resolver run elsewhere</text>
+
+  <rect x="400" y="152" width="160" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="480" y="175" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">R3</text>
+  <text x="480" y="194" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">resolver with a stale copy</text>
+
+  <!-- answers to the client -->
+  <line x1="120" y1="210" x2="250" y2="326" stroke="var(--accent)" stroke-width="2" marker-end="url(#res-arrow-accent)"/>
+  <line x1="300" y1="210" x2="300" y2="326" stroke="var(--accent)" stroke-width="2" marker-end="url(#res-arrow-accent)"/>
+  <line x1="480" y1="210" x2="350" y2="326" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#res-arrow-bad)"/>
+
+  <text x="150" y="268" font-family="var(--font-mono)" font-size="12" fill="var(--accent)" text-anchor="end">v3</text>
+  <text x="312" y="268" font-family="var(--font-mono)" font-size="12" fill="var(--accent)">v3</text>
+  <text x="440" y="262" font-family="var(--font-mono)" font-size="12" fill="var(--bad)">v2</text>
+  <text x="440" y="278" font-family="var(--font-display)" font-size="12" fill="var(--bad)">stale</text>
+
+  <!-- client -->
+  <rect x="130" y="330" width="340" height="76" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="300" y="353" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">client</text>
+  <text x="300" y="373" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">fetches from K of N resolvers (here 2 of 3)</text>
+  <text x="300" y="391" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">compares the versions by provenance mark</text>
+
+  <!-- outcomes -->
+  <line x1="220" y1="408" x2="168" y2="466" stroke="var(--accent)" stroke-width="2" marker-end="url(#res-arrow-accent)"/>
+  <line x1="380" y1="408" x2="432" y2="466" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#res-arrow-bad)"/>
+
+  <rect x="40" y="470" width="250" height="72" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="165" y="494" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">accepted: v3</text>
+  <text x="165" y="513" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">the newest version</text>
+  <text x="165" y="529" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">the quorum agrees on</text>
+
+  <rect x="310" y="470" width="250" height="72" rx="4" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="435" y="494" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">fails closed</text>
+  <text x="435" y="513" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">only stale answers, or two valid</text>
+  <text x="435" y="529" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">documents not on one chain (duplicity)</text>
+
+  <text x="300" y="574" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">A resolver cannot forge a document, only serve an old one. Freshness is a security property.</text>
+</svg>
+</div></div><figcaption>Resolution, as designed for the self-custody rungs. A client asks the resolvers the document itself names; for consequential operations it asks K of N and takes the newest version they agree on. Hosted documents name no resolvers yet; they are served at IdentiKey's well-known address.</figcaption></figure>
+
+<ol>
+<li><strong>The document names its own resolvers.</strong> The resolution methods inside the signed document are chosen by the identity's controller, the party holding its governing keys (<a class="xref" href="part3.html#s14">section 14</a>). That is the design; the documents the hosted service creates today name none, and the service requires at least two before an account can move to self-custody (C3). Moving to a different resolver is a document update signed with <code>Update</code>, not a request to the operator. IdentiKey runs one resolver and is never required to be the only one.</li>
+<li><strong>Provenance marks order revisions.</strong> Given several copies of a document, "newer" is checkable from the chain itself, without trusting whoever served each copy.</li>
+<li><strong>Threshold reads for consequential operations.</strong> A party that needs assurance fetches from K of the N declared resolvers and takes the highest provenance mark. If two valid documents turn out not to be on the same chain, that is <strong>duplicity</strong>, evidence that someone has forked the history, and the resolver code fails closed (refuses the operation and reports the conflict) rather than picking a winner, because picking one would let whichever fork reached the reader first decide who controls the identity.</li>
+<li><strong>Freshness tiers by what is at stake.</strong> An ordinary login may use a cached document inside the sixty-second window (the <code>Cached</code> tier). A change to the key graph, a delegation, a custody migration or a wallet-class action requires a fresh read rather than a cached copy (the <code>Consequential</code> tier), and the library refuses to run that tier on cache-only input.</li>
+<li><strong>The operator's resolver is a convenience, not a root of trust.</strong> It makes the document available. It holds no authority the document did not grant it.</li>
+</ol>
+<p>How many resolvers an account needs follows from who holds its keys. While IdentiKey holds the signing key (the hosted accounts of <a class="xref" href="part4.html">Part 4</a>), a single resolver run by IdentiKey is an honest default: a dishonest custodian holding your key has no need to lie about resolution, it could simply sign. Once a user holds their own keys, the calculus inverts, and a sole resolver run by the former custodian would be the one lever it still held over an otherwise independent identity. <a class="xref" href="part5.html">Part 5</a> returns to this when it describes what climbing the custody ladder has to move.</p>
+<p>One limit is worth stating plainly. Resolution serves parties who know the XID. An app that received a pairwise subject (<a class="xref" href="part2.html#s12">section 12</a>) does not know the XID and cannot resolve the document, by design. The two decisions, pairwise subjects and self-described resolution, were made together and constrain each other: unlinkability at the app boundary, verifiability for the parties the user has chosen to show the real identifier.</p>
+<nav class="pager"><a class="prev" href="part2.html"><small>Previous</small>Part 2. Signing in to apps</a><a class="next" href="part4.html"><small>Next</small>Part 4. The hosted service</a></nav>
+<footer class="site-footer"><p class="ik-note">Generated from <code>tutorials/identikey-tutorial-v3.md</code> on 2 Nov 2026 by <code>tutorials/web/build.py</code>. Interactives run entirely in your browser; nothing is sent anywhere.</p></footer>
+</main>
+<aside class="rail" aria-label="On this page"><h2>On this page</h2><ol></ol></aside>
+</div>
+<script src="assets/ikcrypto.js"></script>
+<script src="assets/widgets/challenge.js"></script><script src="assets/widgets/grid.js"></script><script src="assets/widgets/hash.js"></script><script src="assets/widgets/hashchain.js"></script><script src="assets/widgets/jwt.js"></script><script src="assets/widgets/oidcflow.js"></script><script src="assets/widgets/pairwise.js"></script><script src="assets/widgets/signverify.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

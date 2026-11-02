@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Part 1. The landscape · IdentiKey tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="index.html"><span class="brand-long">IdentiKey, from the ground up</span><span class="brand-short">IdentiKey</span></a><nav aria-label="Parts"><a href="index.html">Start</a><a href="part1.html" aria-current="page">Part 1</a><a href="part2.html">Part 2</a><a href="part3.html">Part 3</a><a href="part4.html">Part 4</a><a href="part5.html">Part 5</a><a href="glossary.html">Glossary</a></nav></div></header>
+<div class="page">
+<main class="prose">
+<p class="kicker">Part 1</p><h1 id="part-1-the-landscape">The landscape</h1>
+<h3 id="s1">1. Identity, authentication and authorization</h3>
+<p>Every time a software system grants access, it must answer three different questions.</p>
+<ul>
+<li>The question of <strong>Identity</strong> is <em>who do you claim to be?</em> An identity is a name for a <strong>party</strong> that persists over time, so that the system can recognise it again. A party is anyone or anything that can be named: a person, a company, a team, an AI agent, or a running program. RFC 4949 formally defines identity as: "the collective aspect of a set of attributes that distinguishes an entity."</li>
+<li>The question of <strong>Authentication</strong> is <em>are you really that party?</em> The process of Authentication establishes <strong>who holds a credential</strong>, where a credential is a mechanism of proving identity: a password, a key, a badge, a token. Typing a password, touching a fingerprint sensor and tapping a security key are all acts of authentication. RFC 4949 formally defines authentication as: "the process of verifying a claim that a system entity has a certain attribute or identity"</li>
+<li>The question of <strong>Authorization</strong> is <em>what may you do?</em> Knowing that a party is authenticated says nothing about what that party is permitted to do within the system. Authorization is the province of the app that a party has been admitted into: IdentiKey has no claim here. RFC 4949 formally defines authorization as "approval granted to a system entity to access a resource"</li>
+</ul>
+<p>Three pieces of cryptography underpin nearly everything IdentiKey does. You do not need to understand the mathematics, only what each piece guarantees and what it does not. These pieces are: hashes, keys, and signatures.</p>
+<h3 id="s2">2. Hashes</h3>
+<p><strong>Hashes.</strong> A cryptographic hash function takes an input of any size (a password, a file, a whole database) and produces a fixed-size numerical representation, called a hash or digest (typically 32 bytes)</p>
+<p>A hash function has three properties that make it useful:</p>
+<ol>
+<li>Deterministic: the same input always gives the same output.</li>
+<li>One-way: given a hash, you can’t work backward to find the input.</li>
+<li>Collision-resistant: it’s effectively impossible to find two different inputs that produce the same hash, and changing even one bit of the input produces a completely different, unpredictable hash.</li>
+</ol>
+<p>Think of a hash as a fingerprint for data. Re-running the same data through the same hash function will always reproduce the same identical hash. These characteristics make a hash a stable representation of the state of a file at the time it was hashed. If you know the hash of a document, you can confirm whether a copy of that document is identical to the original the hash was computed from.</p>
+<figure class="ik-figure is-widget" id="fig-hash" data-widget="hash" data-opts="{}"><div class="ik-body"></div><figcaption>A hash is a fingerprint. Edit the text and watch the SHA-256 digest change entirely; put it back and the same digest returns.</figcaption></figure>
+
+<p>IdentiKey uses SHA-256, which produces a 32 byte hash regardless of the size of the input. Like all hash functions, SHA-256 is open source and auditable. Wherever IdentiKey uses a hash, the reader can always tell which function made it: either the format fixes it (a XID is always SHA-256, by definition) or the value is labelled with the function's name., a</p>
+<h3 id="s3">3. Keys</h3>
+<p>A <strong>key pair</strong> is two linked numbers associated with an identity, called a private and a public key. Keys are created in a process called key generation.</p>
+<p>The <strong>private key:</strong></p>
+<ul>
+<li>Is generated randomly by its owner (IdentiKey uses the Ed25519 signature scheme, explained in <a class="xref" href="part1.html#s5">section 5</a>, to generate the private key, which is a 32 byte number.)</li>
+<li>Stays with its owner and remains secret.</li>
+<li>Enables you to produce a new, valid signature (defined below) over any message you choose. In the context of Identikey, this will be over a challenge (described in <a class="xref" href="part1.html#s6">section 6</a>)</li>
+</ul>
+<p>The <strong>public key:</strong></p>
+<ul>
+<li>Is derived deterministically from the private key (computed by a fixed one-way procedure by the signature scheme.)</li>
+<li>Can be shown to anyone and is freely sharable.</li>
+<li>Lets you verify that a private key produced a specific signature.</li>
+</ul>
+<p>They are created together, and intended to be used in tandem.</p>
+<h3 id="s4">4. Signatures</h3>
+<p><strong>.</strong></p>
+<p>A <strong>signature</strong> is a fixed-size number computed from the hash of some data and a private key. Producing it is a process called <strong>signing</strong>, and only the holder of the private key can do it. A signature's value is bound to the data that is being signed.</p>
+<p>A valid signature carries two assertions:</p>
+<ol>
+<li>Origin: The private key matching the associated public key produced the signature.</li>
+<li>Integrity: the hash, and thereby the data it was created from, represents the exact state the data was in at the time it was signed. If even one bit of the data changes after the signature was created, the verifier will compute a different hash from its copy, and verification will fail (<a class="xref" href="part1.html#s5">section 5</a>)</li>
+</ol>
+<p>A signature proves which private key signed and that nothing changed since. - but its existence does not relate in any way to verbal claims made by the file whose hash has been signed. If someone signs "the refund was sent", the signature tells you who said so, not whether the refund actually occurred.</p>
+<figure class="ik-figure is-widget" id="fig-signverify" data-widget="signverify" data-opts="{}"><div class="ik-body"></div><figcaption>Sign and verify in the browser. Generate an Ed25519 key pair, sign a message, then tamper with the message or swap the public key and watch verification fail.</figcaption></figure>
+
+<p>A signature generally lives in one of two places:</p>
+<ul>
+<li><em>Attached</em>: the signature is packed into the same object as the data. One example would be a JWT (<a class="xref" href="part2.html#s9">section 9</a>), a single string made of header, payload and signature joined by dots, while another would be an IdentiKey XID document (introduced in <a class="xref" href="part3.html">Part 3</a>), a binary file that carries both its contents and the signature over them.</li>
+<li><em>Detached</em>: the signature is stored separately from the data, either right beside it (such as a <code>.sig</code> file next to a download or a column in the same database row) or somewhere the verifier fetches it from (such as a public log or a separate database) using the data's hash as the key.</li>
+</ul>
+<figure class="ik-figure is-diagram" id="fig-sig-placement"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 664" role="img" aria-labelledby="sp-title">
+  <title id="sp-title">Where a signature lives, in three panels. Attached: the data and the signature in one object, as in a JWT, three base64url strings joined by dots, or a signed Gordian Envelope. Detached and beside the data: a .sig file next to a download, or a signature column in the same database row. Detached and fetched: the verifier hashes the data with SHA-256 and uses the hash as the key to look the signature up in a public log or a separate database.</title>
+  <defs>
+    <marker id="sp-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="sp-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- 1. Attached -->
+  <rect x="20" y="16" width="600" height="212" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="36" y="40" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">1  Attached</text>
+  <text x="36" y="58" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the signature is packed into the same object as the data</text>
+
+  <rect x="36" y="70" width="568" height="38" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="420" y="70" width="184" height="38" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="228" y="94" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">data</text>
+  <text x="512" y="94" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+
+  <text x="36" y="134" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">a JWT (section 9): three base64url strings joined by dots</text>
+  <rect x="36" y="144" width="172" height="26" rx="3" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="122" y="161" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">eyJhbGciOiJFZERTQSJ9</text>
+  <circle cx="218" cy="166" r="3.5" fill="var(--accent)" stroke="none"/>
+  <rect x="228" y="144" width="172" height="26" rx="3" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="314" y="161" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">eyJzdWIiOiI4a1F4…</text>
+  <circle cx="410" cy="166" r="3.5" fill="var(--accent)" stroke="none"/>
+  <rect x="420" y="144" width="184" height="26" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="512" y="161" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">SflKxwRJSMeKKF2Q…</text>
+  <text x="122" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">header</text>
+  <text x="314" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">payload</text>
+  <text x="512" y="186" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+
+  <text x="36" y="212" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">or a signed Gordian Envelope: content and signature in one structure</text>
+
+  <!-- 2. Detached, beside the data -->
+  <rect x="20" y="240" width="600" height="170" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="36" y="264" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">2  Detached, beside the data</text>
+  <text x="36" y="282" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">stored separately, but kept right next to it</text>
+
+  <path d="M44 298 H68 L78 308 V340 H44 Z" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <path d="M68 298 V308 H78" fill="none" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="92" y="324" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">release.tar.gz</text>
+  <path d="M44 352 H68 L78 362 V394 H44 Z" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <path d="M68 352 V362 H78" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="92" y="378" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--accent)">release.tar.gz.sig</text>
+
+  <text x="330" y="310" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">or a column in the same database row</text>
+  <rect x="330" y="322" width="274" height="26" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <rect x="330" y="348" width="274" height="30" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <rect x="500" y="348" width="104" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <line x1="380" y1="322" x2="380" y2="378" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <line x1="500" y1="322" x2="500" y2="348" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="355" y="339" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">id</text>
+  <text x="440" y="339" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">data</text>
+  <text x="552" y="339" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+  <text x="355" y="368" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">42</text>
+  <text x="440" y="368" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">…</text>
+  <text x="552" y="368" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">a1f0…</text>
+  <text x="330" y="398" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">names and values are illustrative</text>
+
+  <!-- 3. Detached, fetched by hash -->
+  <rect x="20" y="422" width="600" height="226" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="36" y="446" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">3  Detached, fetched by hash</text>
+  <text x="36" y="464" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the verifier looks the signature up, using the data's hash as the key</text>
+
+  <rect x="36" y="486" width="120" height="44" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="96" y="513" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">data</text>
+
+  <line x1="156" y1="508" x2="222" y2="508" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sp-arrow-ink)"/>
+  <text x="189" y="500" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">SHA-256</text>
+
+  <rect x="226" y="486" width="140" height="44" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="296" y="504" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">hash</text>
+  <text x="296" y="521" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">9f86d081…</text>
+
+  <line x1="366" y1="508" x2="440" y2="508" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sp-arrow-ink)"/>
+  <text x="403" y="500" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">lookup key</text>
+
+  <path d="M446 488 V528 A79 9 0 0 0 604 528 V488" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <ellipse cx="525" cy="488" rx="79" ry="9" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="525" y="512" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">public log or</text>
+  <text x="525" y="528" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">separate database</text>
+
+  <line x1="525" y1="538" x2="525" y2="572" stroke="var(--accent)" stroke-width="2" marker-end="url(#sp-arrow-accent)"/>
+  <text x="533" y="560" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">returns</text>
+
+  <rect x="446" y="576" width="158" height="40" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="525" y="601" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+
+  <line x1="446" y1="596" x2="372" y2="596" stroke="var(--accent)" stroke-width="2" marker-end="url(#sp-arrow-accent)"/>
+  <rect x="36" y="576" width="330" height="40" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="201" y="593" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">verifier</text>
+  <text x="201" y="608" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">checks it against its own copy of the data</text>
+  <text x="36" y="636" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the hash value is illustrative</text>
+</svg>
+</div></div><figcaption>Where a signature lives: packed into the same object as the data, stored right beside it, or fetched from elsewhere using the data's hash as the lookup key. The JWT fragments, file names, row and hash value are illustrative.</figcaption></figure>
+
+<p>A <strong>signature scheme</strong> is a specification describing three deterministic algorithms:</p>
+<ul>
+<li>How a key pair is generated</li>
+<li>How to 'sign' data and generate a signature</li>
+<li>How to verify a signature</li>
+</ul>
+<p>A signature scheme also includes everything needed to make them unambiguous: the mathematical setting (which curve, which base point, which hash), the sizes and byte encodings of keys and signatures, and the rules for what counts as a valid input. Ed25519 is a scheme in this sense, and RFC 8032 is the document that constitutes it.</p>
+<figure class="ik-figure is-example" id="fig-scheme-functions"><div class="ik-body"><div class="ex-title">A signature scheme&#x27;s three functions, with Ed25519&#x27;s sizes</div><pre><code class="language-text">keygen()                          -&gt; (private_key, public_key)   # 32 bytes each; uses fresh randomness
+sign(private_key, message)        -&gt; signature                   # 64 bytes; deterministic
+verify(public_key, message, sig)  -&gt; yes | no                    # deterministic; no private key needed
+</code></pre>
+<p class="ik-note" style="padding:0.5rem 1rem 0.75rem">In Ed25519 only key generation is random: the same key and message always give the same signature, and verify always gives the same answer.</p></div><figcaption>The three functions a signature scheme defines, with Ed25519's sizes. Key generation uses fresh randomness; signing and verifying are deterministic, and verify never needs the private key.</figcaption></figure>
+
+<p>IdentiKey's signature scheme is Ed25519. (Which library implements it is a separate matter; see "Who actually does the work" in <a class="xref" href="part1.html#s2">section 2</a>)</p>
+<p>Signatures, private, and public keys only work with the signature scheme that made them.</p>
+<p>Note: the key that anchors a person’s identity uses a different scheme, a Schnorr signature over the secp256k1 curve, for reasons that belong in Part 4.</p>
+<p><strong>Who actually does the work.</strong> A scheme such as Ed25519 does nothing on its own; it is a written procedure. Four layers sit between the procedure and a signature:</p>
+<ul>
+<li>The <strong>scheme</strong>: the specification (Ed25519, in RFC 8032) that says exactly how keys are generated, how signing works and how verification works.</li>
+<li>The <strong>library</strong>: code that implements cryptographic algorithms, such as libsodium, OpenSSL or ed25519-dalek. A library typically offers many algorithms side by side: the Ed25519 scheme's three functions, hash functions such as SHA-256, and others. Each is a separate function the program can call. Any correct library, given the same private key and the same message, produces the identical signature, and any correct library accepts a signature made by any other. It is the libraries that are interchangeable, not the keys or the messages.</li>
+<li>The <strong>program</strong>: the software that calls the library, such as a command-line utility, a build script, an installer, a browser or a passkey prompt. It decides what gets signed and in what order the library's functions are called: for instance, call the library's SHA-256 over a file first, then pass the result to the library's Ed25519 sign function. The library does the arithmetic; the program does the sequencing.</li>
+<li>The <strong>party</strong>: the person or system on whose behalf the program runs. The signer directs the signing; the verifier directs the verification (<a class="xref" href="part1.html#s5">section 5</a>). When this tutorial says "the verifier checks a signature", it means that party's program ran the scheme's verification algorithm, through a library, on their behalf.</li>
+</ul>
+<figure class="ik-figure is-diagram" id="fig-layers"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 604" role="img" aria-labelledby="ly-title">
+  <title id="ly-title">Four layers behind a signature, top to bottom. The party, signer or verifier, directs. The program, such as a command-line tool, installer, browser or passkey prompt, decides what is signed and in what order: for instance it calls SHA-256 over a file, then Ed25519 sign over the digest. The library, such as libsodium, OpenSSL or ed25519-dalek, does the arithmetic; correct libraries are interchangeable. The scheme, Ed25519 in RFC 8032, is the written procedure the library implements.</title>
+  <defs>
+    <marker id="ly-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="ly-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- 1. Party -->
+  <rect x="20" y="20" width="600" height="72" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="36" y="50" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Party</text>
+  <text x="36" y="68" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">directs</text>
+  <text x="170" y="50" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the person or system the work is done for</text>
+  <text x="170" y="68" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the signer directs signing; the verifier directs verification</text>
+
+  <line x1="96" y1="92" x2="96" y2="114" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ly-arrow-ink)"/>
+  <text x="106" y="108" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">runs</text>
+
+  <!-- 2. Program -->
+  <rect x="20" y="118" width="600" height="142" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="36" y="148" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Program</text>
+  <text x="36" y="166" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">sequences</text>
+  <text x="170" y="144" font-family="var(--font-display)" font-size="12" fill="var(--ink)">CLI, build script, installer, browser, passkey prompt</text>
+  <text x="170" y="162" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">decides what gets signed, and the order of the calls</text>
+
+  <rect x="170" y="178" width="170" height="34" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="255" y="200" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">1  sha256(file)</text>
+  <line x1="340" y1="195" x2="364" y2="195" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ly-arrow-ink)"/>
+  <rect x="368" y="178" width="236" height="34" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="486" y="200" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">2  ed25519_sign(key, digest)</text>
+  <text x="170" y="240" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">for instance; a program may also hand the raw data straight to sign</text>
+
+  <!-- calls into the library -->
+  <line x1="255" y1="212" x2="255" y2="226" stroke="var(--accent)" stroke-width="2"/>
+  <line x1="255" y1="248" x2="255" y2="300" stroke="var(--accent)" stroke-width="2" marker-end="url(#ly-arrow-accent)"/>
+  <line x1="486" y1="212" x2="486" y2="226" stroke="var(--accent)" stroke-width="2"/>
+  <line x1="486" y1="248" x2="486" y2="300" stroke="var(--accent)" stroke-width="2" marker-end="url(#ly-arrow-accent)"/>
+
+  <line x1="96" y1="260" x2="96" y2="282" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ly-arrow-ink)"/>
+  <text x="106" y="276" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">calls</text>
+
+  <!-- 3. Library -->
+  <rect x="20" y="286" width="600" height="158" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="36" y="316" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Library</text>
+  <text x="36" y="334" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">does the</text>
+  <text x="36" y="350" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">arithmetic</text>
+
+  <rect x="190" y="304" width="130" height="30" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="255" y="324" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">SHA-256</text>
+  <rect x="414" y="304" width="144" height="30" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="486" y="324" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Ed25519 sign</text>
+  <rect x="170" y="344" width="140" height="28" rx="4" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="240" y="363" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Ed25519 keygen</text>
+  <rect x="320" y="344" width="140" height="28" rx="4" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="390" y="363" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Ed25519 verify</text>
+  <text x="474" y="363" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">and many others</text>
+
+  <text x="170" y="400" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">libsodium  ·  OpenSSL  ·  ed25519-dalek</text>
+  <text x="170" y="420" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">interchangeable: any correct library, same key + same message,</text>
+  <text x="170" y="436" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">gives the identical signature, and accepts the others' signatures</text>
+
+  <line x1="96" y1="444" x2="96" y2="466" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ly-arrow-ink)"/>
+  <text x="106" y="460" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">implements</text>
+
+  <!-- 4. Scheme -->
+  <rect x="20" y="470" width="600" height="76" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="36" y="500" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Scheme</text>
+  <text x="36" y="518" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">the procedure</text>
+  <text x="170" y="500" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">Ed25519, specified in RFC 8032</text>
+  <text x="170" y="518" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">a written document: how keys are made, how signing and</text>
+  <text x="170" y="534" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">verification work, the curve, the sizes and the encodings</text>
+
+  <text x="320" y="574" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">"The verifier checks a signature" means the verifier's program ran</text>
+  <text x="320" y="592" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">the scheme's verify function, through a library, on its behalf.</text>
+</svg>
+</div></div><figcaption>The four layers behind a signature. The program does the sequencing and the library does the arithmetic; the two calls shown are an example, not the only way to sign.</figcaption></figure>
+
+<p><strong>Hashing and signing.</strong> Hashing is unavoidable in signing. A signature is a fixed-size value, and the only way to tie a few dozen bytes to data of any size is to boil the data down to a fixed-size digest and sign that.</p>
+<p>In practice a signature is not computed over the data itself but over a hash of it, and there can be two hashing steps involved.</p>
+<ul>
+<li>Pre-hashing (optional, and visible to the program). In general, the signer's program may call a hash function over the data first and hand only the resulting hash to the signature scheme's sign function; most signing formats do this, because the hash is what gets named, compared and reused. IdentiKey's own protocol, identikey-auth, skips this step: its messages are small, so it hands the encoded challenge itself to Ed25519's sign function.</li>
+<li>The scheme's internal hash (always, and invisible to the program). In general, every modern signature scheme hashes its input as part of signing and verifying, whether that input is raw data or an already-computed hash; the program does not ask for this and cannot skip it. In Ed25519, the scheme IdentiKey uses, that built-in step is SHA-512, run inside both the sign and the verify function.</li>
+</ul>
+<p>So a signer who hashes first produces a signature over a hash of a hash; whereas a signer whose program hands the library the raw data gets only the built-in hash. Both are fine. What matters is that the verifier repeats the signer's pre-hash process exactly, when there one. The verifier computes the same pre-hash from its own copy of the raw data and hands that to the verification algorithm, and the scheme's internal hash then is run automatically on both sides. The verifier never takes the signer's pre-hash on trust and never hashes the signer's pre-hash; it recomputes it. A signature can only be checked against the exact bytes it was made over.</p>
+<figure class="ik-figure is-diagram" id="fig-two-hashes"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 690" role="img" aria-labelledby="th-title">
+  <title id="th-title">Two hashing steps, for signer and verifier. The signer's program may pre-hash the data with SHA-256 into a 32-byte digest, then Ed25519 sign takes the digest and the private key and runs SHA-512 internally, producing a 64-byte signature. The verifier repeats the pre-hash on its own copy of the data, then Ed25519 verify takes that digest, the signer's public key and the signature, runs the same internal SHA-512, and answers yes or no. Only the public key and the signature cross from signer to verifier; the digest is recomputed, never received. identikey-auth skips the pre-hash and gives Ed25519 its challenge payload directly.</title>
+  <defs>
+    <marker id="th-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="th-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- signer lane -->
+  <rect x="20" y="16" width="612" height="236" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="50" y="40" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Signer</text>
+  <text x="108" y="40" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the program chooses whether to pre-hash</text>
+
+  <rect x="50" y="54" width="130" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="115" y="76" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">data</text>
+  <text x="115" y="94" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">any size</text>
+  <line x1="180" y1="80" x2="206" y2="80" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="210" y="54" width="160" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="290" y="76" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-256 pre-hash</text>
+  <text x="290" y="94" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">optional, visible</text>
+  <line x1="370" y1="80" x2="396" y2="80" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="400" y="54" width="100" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="450" y="76" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">32-byte</text>
+  <text x="450" y="94" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">digest</text>
+  <line x1="450" y1="106" x2="450" y2="132" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="50" y="160" width="130" height="52" rx="4" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="115" y="182" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">private key</text>
+  <text x="115" y="200" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">secret, stays here</text>
+  <line x1="180" y1="186" x2="206" y2="186" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="210" y="136" width="290" height="100" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="355" y="156" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">Ed25519 sign</text>
+  <rect x="226" y="168" width="258" height="54" rx="4" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="355" y="190" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-512, inside the scheme</text>
+  <text x="355" y="208" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">always runs; the program cannot skip it</text>
+  <line x1="500" y1="186" x2="516" y2="186" stroke="var(--accent)" stroke-width="2" marker-end="url(#th-arrow-accent)"/>
+
+  <rect x="520" y="160" width="100" height="52" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="570" y="182" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">64-byte</text>
+  <text x="570" y="200" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+
+  <rect x="38" y="278" width="72" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="40" y="290" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">public key</text>
+  <rect x="496" y="278" width="68" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="562" y="290" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="end">signature</text>
+  <text x="330" y="282" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">only these two cross to the verifier;</text>
+  <text x="330" y="300" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the digest is never sent, never trusted</text>
+
+  <!-- verifier lane -->
+  <rect x="20" y="326" width="612" height="296" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="50" y="350" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Verifier</text>
+  <text x="116" y="350" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">repeats the signer's pre-hash exactly</text>
+
+  <rect x="50" y="364" width="130" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="115" y="386" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">its own copy</text>
+  <text x="115" y="404" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">of the data</text>
+  <line x1="180" y1="390" x2="206" y2="390" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="210" y="364" width="160" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="290" y="386" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-256 pre-hash</text>
+  <text x="290" y="404" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">recomputed here</text>
+  <line x1="370" y1="390" x2="396" y2="390" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="400" y="364" width="100" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="450" y="386" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">32-byte</text>
+  <text x="450" y="404" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">digest</text>
+  <line x1="450" y1="416" x2="450" y2="442" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="50" y="474" width="130" height="52" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="115" y="496" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">public key</text>
+  <text x="115" y="514" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the signer's</text>
+  <line x1="180" y1="500" x2="206" y2="500" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="210" y="446" width="290" height="100" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="355" y="466" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">Ed25519 verify</text>
+  <rect x="226" y="478" width="258" height="54" rx="4" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="355" y="500" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-512, inside the scheme</text>
+  <text x="355" y="518" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the same internal step as in sign</text>
+
+  <rect x="520" y="474" width="100" height="52" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="570" y="496" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">64-byte</text>
+  <text x="570" y="514" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+  <line x1="520" y1="500" x2="504" y2="500" stroke="var(--accent)" stroke-width="2" marker-end="url(#th-arrow-accent)"/>
+
+  <line x1="355" y1="546" x2="355" y2="570" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+  <rect x="285" y="574" width="140" height="34" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="355" y="596" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">yes / no</text>
+
+  <!-- what crosses, drawn over both lanes -->
+  <path d="M50 186 H32 V500 H46" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#th-arrow-accent)"/>
+  <line x1="570" y1="212" x2="570" y2="470" stroke="var(--accent)" stroke-width="2" marker-end="url(#th-arrow-accent)"/>
+
+  <!-- the IdentiKey case -->
+  <text x="326" y="648" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">identikey-auth skips the dashed step: Ed25519 signs its dCBOR challenge</text>
+  <text x="326" y="666" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">payload directly, so there the only hash is the SHA-512 inside the scheme.</text>
+</svg>
+</div></div><figcaption>The optional pre-hash, which the program runs, and the SHA-512 that Ed25519 always runs inside sign and verify. Only the public key and the signature reach the verifier, which recomputes the digest from its own copy of the data.</figcaption></figure>
+
+<p>Hashing explicitly, outside the signature scheme, buys practical things. The hash can be computed once and reused, as a checksum, in a cache, or to spot duplicates. It can be signed inside a hardware module that cannot take a large input. It can be published on its own as a fingerprint. And a signed message can name which hash function was used.</p>
+<p>Everything in this process is public except the private key (<a class="xref" href="part1.html#s3">section 3</a>). The hash functions and signature schemes IdentiKey uses are open standards, SHA-256 in FIPS 180-4 and Ed25519 in RFC 8032, built into ordinary cryptography libraries. Keeping the method public and only the key secret is a basic rule of the field, known as Kerckhoffs's principle.</p>
+<p><strong>Choosing algorithms safely.</strong> A message that names its own algorithms invites an attacker to relabel it with a weak one. Wherever a format carries a field saying which hash function or signature scheme was used, a careful verifier checks that name against its own allow-list rather than simply obeying it. IdentiKey's challenge-response protocol (<a class="xref" href="part1.html#s6">section 6</a>) is built this way: it can use more than one scheme, and it refuses to be talked down to a weaker one.</p>
+<h3 id="s5">5. Verification</h3>
+<p>Checking a signature is a separate process called <strong>verifying</strong>, which takes the public key, the same data, and the signature, and answers yes or no to the question of whether the hash, and by extension the data it was created from, matches the hash that was generated when the file was signed by the holder of the private key. The party that checks is called the <strong>verifier</strong>.</p>
+<p>The verification algorithm takes the public key, the hash, and the signature and responds with yes or no: 'yes' if the private key matching that public key produced this signature over exactly this hash, 'no' if not. The verifier can check a signature but, holding only the public key, can never produce one.</p>
+<h3 id="s6">6. Proving you hold a key</h3>
+<p>If your identity is tied to a key pair, authenticating means proving you hold the private key. You cannot do that by showing it, since a shown key is no longer private. Instead, you use the <strong>challenge-response</strong> protocol pattern:</p>
+<ol>
+<li>The verifier sends a <strong>challenge</strong>: a message containing a fresh random value called a <strong>nonce</strong> ("number used once").</li>
+<li>You sign the challenge with your private key and send back the signature, the <strong>response</strong>.</li>
+<li>The verifier checks the signature with your public key.</li>
+</ol>
+<p>This is <strong>proof of possession</strong>: you show that you hold the key, rather than presenting a password or token that could have been copied in transit or from a server.</p>
+<p>Compared with a password, this approach is more secure in three ways:</p>
+<ul>
+<li>The secret never leaves your device; only a signature crosses the network, so a phishing site or an eavesdropper has nothing to catch.</li>
+<li>A captured response cannot be reused, because each response is tied to one challenge.</li>
+<li>The server holds nothing worth stealing: a site stores your public key, so a breach that would leak password hashes gives an attacker nothing to sign in with.</li>
+</ul>
+<p>The nonce defeats the <strong>replay attack</strong>, in which an attacker records a valid response and sends it again later. Good challenge designs add two more fields.</p>
+<ul>
+<li>An <strong>audience</strong> names the verifier the response is for, so a response captured at one site cannot be presented at another.</li>
+<li>An <strong>expiry</strong> limits how long a response is accepted.</li>
+</ul>
+<p>Together these protect <strong>freshness</strong>: evidence that something is current rather than an old copy. (Freshness returns as a security property in its own right in <a class="xref" href="part3.html#s16">section 16</a>)</p>
+<figure class="ik-figure is-widget" id="fig-challenge" data-widget="challenge" data-opts="{}"><div class="ik-body"></div><figcaption>Challenge-response, with a replay attempt. The verifier issues a nonce, the prover signs it, and a captured response is refused the second time, or at another site, or after it expires.</figcaption></figure>
+
+<p>Proof of possession is contingent on the security of the private key - <strong>where the private key is stored still decides how safe it is.</strong> A key in an ordinary file can be copied by malware exactly as a saved password can. There are a number of approaches ranging in security (<a class="xref" href="part5.html#s24">section 24</a> lays them out as access levels A0 to A5) but the most secure option comes from <strong>secure hardware</strong>: a chip built to hold keys, such as Apple's Secure Enclave, a PC's TPM, or a USB security key. Such a chip creates keys that never leave it and signs on request, usually after a fingerprint or PIN. Malware might trick it into signing while running, but cannot take the key away to use later. <a class="xref" href="part4.html#s22">Section 22</a> goes through every key in the IdentiKey system (yours, IdentiKey's own, and the session keys between) and says where each one is stored and whether secure hardware protects it.</p>
+<p>IdentiKey's own challenge-response protocol is <strong><code>identikey-auth</code></strong>. Its challenge carries a nonce, an audience, and an expiry in a canonical byte encoding, so both sides are certain they are verifying the same bytes. It is <strong>cipher-agile</strong>, able to use more than one signature algorithm, including a <strong>hybrid</strong> of Ed25519 with ML-DSA. ML-DSA is a <strong>post-quantum</strong> algorithm, designed to stay secure against future quantum computers. The IdentiKey server uses <code>identikey-auth</code> in two places: when it signs a challenge on a user's behalf (<a class="xref" href="part4.html#s20">section 20</a>), and when it accepts a challenge signed by the user's own key (<a class="xref" href="part5.html#s25">section 25</a>).</p>
+<figure class="ik-figure is-example" id="fig-canonical"><div class="ik-body"><div class="ex-title">Same meaning, different bytes</div><pre><code class="language-text"># illustrative JSON, not identikey-auth's encoding
+{&quot;nonce&quot;:&quot;q3XvT9aLm2Rk&quot;,&quot;aud&quot;:&quot;example.com&quot;,&quot;exp&quot;:1767225900}
+  SHA-256 = a5e28835 7297f594 …
+{&quot;aud&quot;:&quot;example.com&quot;,&quot;exp&quot;:1767225900,&quot;nonce&quot;:&quot;q3XvT9aLm2Rk&quot;}
+  SHA-256 = f86877f7 c43596d6 …
+
+# same fields, different bytes, different hash:
+# a signature over one does not verify against the other
+</code></pre>
+<pre><code class="language-text"># identikey-auth: the challenge as deterministic CBOR (dCBOR)
+{ &quot;v&quot;: 1, &quot;aud&quot;: &quot;example.com&quot;, &quot;exp&quot;: 1767225900,
+  &quot;iat&quot;: 1767225600, &quot;nonce&quot;: &lt;16 or more random bytes&gt; }
+
+# integers in their shortest form, map keys sorted by their encoded bytes:
+# these values have exactly one encoding, and a decoder rejects any other
+signed payload = dCBOR([ &quot;identikey-auth/v1&quot;, &quot;challenge&quot;, &lt;challenge bytes&gt; ])
+</code></pre></div><figcaption>The same fields written two ways give two different hashes, so a signature over one fails against the other. The JSON is illustrative; identikey-auth encodes its challenge as deterministic CBOR (dCBOR), where each value has exactly one encoding.</figcaption></figure>
+
+<h3 id="s7">7. Passkeys</h3>
+<p>A <strong>passkey</strong> is the credential used by <strong>WebAuthn</strong>, the web standard that brings challenge-response to ordinary sign-in. When you create a passkey for a website, your device makes a key pair just for that site and keeps the private key, usually unlocked by fingerprint or face. When you sign in, the site sends a challenge and your device signs it. IdentiKey's hosted sign-in is passkey-only: no username, no password.</p>
+<p>A passkey is the key pair together with the bookkeeping the authenticator stores beside it:</p>
+<ul>
+<li>A credential id</li>
+<li>The site it belongs to (recorded as the RP id, where RP stands for relying party, WebAuthn's name for the website or app that relies on the passkey to authenticate you. The RP id is that site's domain name)</li>
+<li>The user handle and user name (two labels explained at the end of this section)</li>
+<li>A signature counter (a number the authenticator increases by one every time it signs; the site remembers the last value it saw, and a counter that repeats or goes backwards suggests the passkey has been copied and is being used from two places, so IdentiKey refuses that sign-in; synced passkeys keep no counter and report zero every time, which is always accepted). The private key is the only secret in that bundle; the rest is labelling so the authenticator (WebAuthn's word for whatever holds your passkeys and does the signing: the secure chip in your phone or laptop, a password manager, or a USB security key) can find the right key when a site asks. So "a synced passkey is copied" means the whole bundle is copied, and the security concern is specifically the private key travelling with it. In loose usage, yes, "passkey" and "private key" are interchangeable; when precision matters, passkey = private key + metadata, and the public half lives with the site.</li>
+</ul>
+<figure class="ik-figure is-example" id="fig-passkey-records"><div class="ik-body"><div class="ex-title">What the authenticator and IdentiKey each hold for one passkey</div><pre><code class="language-text"># on the authenticator: the passkey
+credential id   7b1e44c2…                        (illustrative)
+private key     ••••••••                         the only secret; never leaves
+RP id           auth.identikey.me
+user handle     5f0c2a9e-3d41-5b7a-9c18-2e6f04d1a7b3
+                UUID v5 derived from the XID; never shown
+user name       3dLGACrVKP67MtW4kwbGqrHZsJUcm2tjQ9pEf8vNyRBa
+                the XID in base58, also the display name
+sign counter    0 on synced passkeys; hardware keys count up
+</code></pre>
+<pre><code class="language-text"># at IdentiKey, the relying party: one credentials row
+credential id   7b1e44c2…
+public key      COSE key, ES256 or RS256
+account         the XID (the user handle is recomputed from it)
+sign counter    the last value seen
+nickname, AAGUID, backed-up flag    display hints, never used to accept
+</code></pre>
+<pre><code class="language-text"># the counter check on each sign-in
+counter = 0                 accept (synced passkeys always report 0)
+counter &gt; stored            accept, store the new value
+0 &lt; counter &lt;= stored       refuse: &quot;sign counter did not increase&quot;
+</code></pre>
+<p class="ik-note" style="padding:0.5rem 1rem 0.75rem">The XID, handle, ids and counters are illustrative.</p></div><figcaption>What the authenticator stores for a passkey, what IdentiKey stores for the same credential, and the counter check IdentiKey applies at each sign-in. The XID, handle, ids and counters are illustrative.</figcaption></figure>
+
+<p>Passkeys can be synced between your devices by a password manager such as iCloud Keychain, Google Password Manager or 1Password. A <strong>synced passkey</strong> is copied, end-to-end encrypted, to each of your devices, so it is not locked inside one device's secure hardware; it is as safe as the account that syncs it. A passkey on a hardware security key never leaves that key, and losing the key loses the passkey. IdentiKey accepts both kinds. It requires the passkey to be a <em>resident</em> credential, one the authenticator stores and can offer without being told a username first.</p>
+<p>Three facts about passkeys shape IdentiKey:</p>
+<ul>
+<li><strong>They resist phishing.</strong> Phishing is tricking someone into signing in on a fake site. A passkey is bound to the real site's domain name, the <strong>RP ID</strong> (relying party identifier). A browser will not use a passkey registered for <code>auth.identikey.me</code> on a look-alike domain.</li>
+<li><strong>The RP ID is permanent.</strong> Every passkey records it at creation, so changing it later would force every user to enrol again. IdentiKey's RP ID is <code>auth.identikey.me</code>, chosen so that the one name that can never change sits on a dedicated sign-in domain, apart from marketing pages and any future pages that carry user content (ADR-004). The server publishes <code>/.well-known/webauthn</code> on that origin, the standard place to declare which other origins may use its passkeys.</li>
+<li><strong>A passkey proves something to a remote party.</strong> It tells a website "the person who registered this credential is here". That is different from unlocking a key that already sits on your own device, a distinction <a class="xref" href="part5.html">Part 5</a> makes precise.</li>
+</ul>
+<figure class="ik-figure is-diagram" id="fig-passkey-signin"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 852" role="img" aria-labelledby="ps-title">
+  <title id="ps-title">A passkey sign-in between IdentiKey, the browser and the authenticator. IdentiKey sends a single-use challenge for the RP ID auth.identikey.me with user verification required. The browser checks that the page's origin matches the RP ID; on a look-alike domain no passkey is offered. The browser passes the RP ID and the SHA-256 of the client data, which holds the challenge and the origin. The authenticator finds the passkey, you unlock it with fingerprint, face or PIN, and it signs the authenticator data plus that hash. The assertion goes back through the browser, and IdentiKey accepts it only if the challenge, origin, RP ID hash, user-verified flag, signature and counter all check out; a counter of zero is always accepted.</title>
+  <defs>
+    <marker id="ps-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="ps-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="ps-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- lifelines -->
+  <line x1="110" y1="64" x2="110" y2="618" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="320" y1="64" x2="320" y2="618" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="530" y1="64" x2="530" y2="618" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <!-- participants -->
+  <rect x="30" y="18" width="160" height="44" rx="4" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="110" y="37" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">IdentiKey</text>
+  <text x="110" y="53" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the relying party (RP)</text>
+
+  <rect x="240" y="18" width="160" height="44" rx="4" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="37" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">Browser</text>
+  <text x="320" y="53" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">knows the page's origin</text>
+
+  <rect x="450" y="18" width="160" height="44" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="530" y="37" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">Authenticator</text>
+  <text x="530" y="53" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">holds the private key</text>
+
+  <!-- 1. Challenge -->
+  <line x1="30" y1="82" x2="610" y2="82" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="74" width="100" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="88" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">1  Challenge</text>
+
+  <line x1="110" y1="120" x2="314" y2="120" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ps-arrow-ink)"/>
+  <rect x="130" y="102" width="170" height="14" fill="var(--paper)" stroke="none"/>
+  <text x="215" y="113" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">challenge + options</text>
+  <rect x="40" y="126" width="390" height="34" fill="var(--paper)" stroke="none"/>
+  <text x="215" y="138" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">random, single use, valid 5 minutes;</text>
+  <text x="215" y="154" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">RP ID auth.identikey.me, user verification required</text>
+
+  <!-- 2. Origin check -->
+  <line x1="30" y1="176" x2="610" y2="176" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="168" width="120" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="182" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">2  Origin check</text>
+
+  <rect x="226" y="194" width="188" height="62" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="214" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">does this page's origin</text>
+  <text x="320" y="230" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">match the RP ID?</text>
+  <text x="320" y="247" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">auth.identikey.me</text>
+
+  <line x1="414" y1="225" x2="444" y2="225" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#ps-arrow-bad)"/>
+  <rect x="448" y="194" width="162" height="62" rx="4" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="529" y="214" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">look-alike domain:</text>
+  <text x="529" y="230" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">no passkey offered</text>
+  <text x="529" y="247" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">nothing is signed</text>
+  <text x="300" y="274" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">match: continue</text>
+
+  <!-- 3. Ask the authenticator -->
+  <line x1="30" y1="290" x2="610" y2="290" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="282" width="180" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="296" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">3  Ask the authenticator</text>
+
+  <line x1="320" y1="326" x2="524" y2="326" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ps-arrow-ink)"/>
+  <rect x="318" y="306" width="226" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="431" y="318" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">RP ID + SHA-256(clientDataJSON)</text>
+  <rect x="296" y="332" width="270" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="431" y="344" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">clientDataJSON: type, challenge, origin</text>
+
+  <!-- 4. Unlock and sign -->
+  <line x1="30" y1="364" x2="610" y2="364" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="356" width="140" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="370" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">4  Unlock and sign</text>
+
+  <rect x="372" y="382" width="238" height="140" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="386" y="402" font-family="var(--font-display)" font-size="12" fill="var(--ink)">finds the passkey for this RP ID</text>
+  <text x="386" y="420" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">you unlock it: fingerprint, face, PIN</text>
+  <text x="386" y="438" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">signs authenticatorData</text>
+  <text x="386" y="454" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--accent)">  + SHA-256(clientDataJSON)</text>
+  <text x="386" y="476" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">authenticatorData: SHA-256(RP ID),</text>
+  <text x="386" y="492" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the UP and UV flags, the counter</text>
+  <text x="386" y="510" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">(synced passkeys report counter 0)</text>
+
+  <rect x="346" y="400" width="6" height="66" rx="3" fill="var(--warm)" stroke="none"/>
+  <rect x="190" y="410" width="148" height="34" fill="var(--paper)" stroke="none"/>
+  <text x="338" y="422" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">private key used here;</text>
+  <text x="338" y="438" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">it never leaves</text>
+
+  <!-- 5. Assertion -->
+  <line x1="30" y1="540" x2="610" y2="540" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="532" width="100" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="546" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">5  Assertion</text>
+
+  <line x1="530" y1="576" x2="116" y2="576" stroke="var(--accent)" stroke-width="2" marker-end="url(#ps-arrow-accent)"/>
+  <rect x="200" y="558" width="240" height="14" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="569" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">the assertion, relayed by the browser</text>
+  <rect x="120" y="582" width="400" height="34" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="594" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">credential id, authenticatorData, clientDataJSON,</text>
+  <text x="320" y="610" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the signature, the user handle</text>
+
+  <!-- 6. IdentiKey verifies -->
+  <line x1="30" y1="632" x2="610" y2="632" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="624" width="160" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="638" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">6  IdentiKey verifies</text>
+
+  <rect x="30" y="652" width="400" height="190" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="46" y="674" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)">accepted only if all of these hold</text>
+  <text x="46" y="696" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the challenge is the one it issued, unused, unexpired</text>
+  <text x="46" y="714" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the origin in clientDataJSON is on its allow-list</text>
+  <text x="46" y="732" font-family="var(--font-display)" font-size="12" fill="var(--ink)">authenticatorData carries SHA-256(auth.identikey.me)</text>
+  <text x="46" y="750" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the UV flag is set: you were verified, not just present</text>
+  <text x="46" y="768" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the signature verifies with the stored public key</text>
+  <text x="58" y="784" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">(ES256 or RS256, chosen at registration)</text>
+  <text x="46" y="806" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">counter: 0 is always accepted; a nonzero</text>
+  <text x="58" y="824" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">counter must exceed the stored one</text>
+
+  <text x="446" y="700" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--good)">all hold: signed in as the</text>
+  <text x="446" y="716" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--good)">XID that owns the passkey</text>
+  <text x="446" y="748" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)">any fails: refused</text>
+  <text x="446" y="784" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the browser, not you,</text>
+  <text x="446" y="800" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">compares the origin, so a</text>
+  <text x="446" y="816" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">convincing fake page</text>
+  <text x="446" y="832" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">still gets nothing</text>
+</svg>
+</div></div><figcaption>A passkey sign-in at IdentiKey. Phishing fails at step 2, where the browser, not the person, compares the page's origin with the RP ID; IdentiKey then checks the challenge, origin, RP ID hash, user-verified flag, signature and counter.</figcaption></figure>
+
+<p>Inside IdentiKey a passkey is a credential registered against an identity, not the identity itself. The WebAuthn user handle is a UUID derived from the identity's identifier, so the same person always gets the same handle, and the user name shown in the passkey prompt is that identifier in its text form. Several passkeys can belong to one identity. <a class="xref" href="part4.html#s21">Section 21</a> covers adding and removing them.</p>
+<p>Two of those terms need unpacking. When a passkey is created, the website hands the authenticator two pieces of identifying data to store alongside the new key pair.</p>
+<ul>
+<li>The <strong>user handle</strong> is an opaque identifier the site will use later to look the account up. The WebAuthn standard requires it to be stable and to carry no personal information, and it is never shown to the person. IdentiKey fills it with a UUID, a universally unique identifier (a fixed-size value written in the familiar 8-4-4-4-12 hexadecimal form), derived deterministically from the identity's permanent identifier, the XID described in Part 3. Deriving it rather than inventing a fresh one means that when the same person enrolls a second passkey, on another device or years later, both passkeys carry the same handle and IdentiKey can tell they belong to one identity.</li>
+<li>The <strong>user name</strong> is the human-readable label the browser or password manager shows in the passkey prompt so the person can tell their passkeys apart. IdentiKey uses the XID written out as text (the base58 form shown in <a class="xref" href="part3.html#s13">section 13</a>) rather than an email address, because an IdentiKey identity has no email address at its core.</li>
+</ul>
+<nav class="pager"><a class="prev" href="index.html"><small>Previous</small>Start here</a><a class="next" href="part2.html"><small>Next</small>Part 2. Signing in to apps</a></nav>
+<footer class="site-footer"><p class="ik-note">Generated from <code>tutorials/identikey-tutorial-v3.md</code> on 2 Nov 2026 by <code>tutorials/web/build.py</code>. Interactives run entirely in your browser; nothing is sent anywhere.</p></footer>
+</main>
+<aside class="rail" aria-label="On this page"><h2>On this page</h2><ol></ol></aside>
+</div>
+<script src="assets/ikcrypto.js"></script>
+<script src="assets/widgets/challenge.js"></script><script src="assets/widgets/grid.js"></script><script src="assets/widgets/hash.js"></script><script src="assets/widgets/hashchain.js"></script><script src="assets/widgets/jwt.js"></script><script src="assets/widgets/oidcflow.js"></script><script src="assets/widgets/pairwise.js"></script><script src="assets/widgets/signverify.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Part 5. The custody ladder · IdentiKey tutorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="index.html"><span class="brand-long">IdentiKey, from the ground up</span><span class="brand-short">IdentiKey</span></a><nav aria-label="Parts"><a href="index.html">Start</a><a href="part1.html">Part 1</a><a href="part2.html">Part 2</a><a href="part3.html">Part 3</a><a href="part4.html">Part 4</a><a href="part5.html" aria-current="page">Part 5</a><a href="glossary.html">Glossary</a></nav></div></header>
+<div class="page">
+<main class="prose">
+<p class="kicker">Part 5</p><h1 id="part-5-the-custody-ladder">The custody ladder</h1>
+<p>Everything so far has been a description. This part is the map. It names the five positions a key can be in, the six ways a person can reach it, the rules that no design change is allowed to break, and then says plainly where an account created on the hosted service sits on that map today. The final section looks up the ladder, far enough to see what the next rungs would take, and hands over to the companion Spec document for the rest of the climb.</p>
+<h3 id="s23">23. The custody ladder</h3>
+<p>Custody answers one question: who can produce a signature with your key? IdentiKey arranges the answers as a ladder with five rungs.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Rung</th>
+<th>Name</th>
+<th>Who can sign</th>
+<th>Recovery</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>C0</strong></td>
+<td>Throwaway</td>
+<td>you, until you lose it</td>
+<td>none, by design</td>
+<td>An ephemeral or semi-anonymous identity. A legitimate destination, not a failure.</td>
+</tr>
+<tr>
+<td><strong>C1</strong></td>
+<td>Custodial</td>
+<td>the service, unilaterally</td>
+<td>the service can restore access (not yet offered; see below)</td>
+<td>A traditional account. The honest name for most products that call themselves "web3 login".</td>
+</tr>
+<tr>
+<td><strong>C2</strong></td>
+<td>Managed</td>
+<td>the service, but only on your authenticated instruction, with a logged consent record</td>
+<td>the service can restore access (not yet offered; see below)</td>
+<td>The hosted product's design target. The service signs for you, and cannot sign without you.</td>
+</tr>
+<tr>
+<td><strong>C3</strong></td>
+<td>Self-custody, assisted recovery</td>
+<td>only you</td>
+<td>a quorum of guardians you chose</td>
+<td>The recommended destination. Self-custody that survives a lost phone.</td>
+</tr>
+<tr>
+<td><strong>C4</strong></td>
+<td>Self-custody, sole</td>
+<td>only you</td>
+<td>none</td>
+<td>Be your own bank. Available on purpose, never the default.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The table describes what each rung allows by design, not what the hosted service offers today. At C1 and C2 the design lets the service restore <em>access to the account</em>, never the key itself (invariant I2, <a class="xref" href="part5.html#s26">section 26</a>). The hosted service has no such restore path yet: if you lose your last passkey it cannot help you back in (<a class="xref" href="part4.html#s21">section 21</a>).</p>
+<p>Two words in the C3 row carry weight. A <strong>guardian</strong> is a person or service you choose to hold one share of your recovery material, and a <strong>quorum</strong> is the minimum number of guardians, fewer than all of them, who must act together to restore your key. The threshold is set so that no single guardian can reconstruct the key alone, and no single guardian who disappears can lock you out. <a class="xref" href="part5.html#s27">Section 27</a> says how the shares are made.</p>
+<p>The intended direction of travel is upward, from C1 through C2 to C3. C3, not C4, is the goal, because the assisted-recovery rung is what makes self-custody survivable for people who are not cryptographers. C4 exists for those who want it and understand that nobody can help them.</p>
+<figure class="ik-figure is-diagram" id="fig-ladder"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 700" role="img" aria-labelledby="lad-title">
+  <title id="lad-title">The custody ladder: five rungs from C0 Throwaway at the bottom through C1 Custodial, C2 Managed and C3 Self-custody with assisted recovery to C4 Self-custody, sole at the top, each answering who can produce a signature with your key. C1 and C2 are the hosted service today; the line between them separates a service that can sign without you from one that cannot sign without your logged, authenticated instruction. The intended direction of travel runs from C1 up to C3, the goal.</title>
+  <defs>
+    <marker id="lad-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="lad-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <text x="130" y="34" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Who can produce a signature with your key?</text>
+
+  <!-- hosted service band around C1 and C2 -->
+  <rect x="120" y="266" width="500" height="266" rx="8" fill="var(--accent-soft)" stroke="none"/>
+  <text x="604" y="399" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle" transform="rotate(-90 604 399)">hosted service today</text>
+
+  <!-- C4 -->
+  <rect x="130" y="60" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="146" y="88" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)">C4</text>
+  <text x="190" y="88" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Self-custody, sole</text>
+  <text x="190" y="110" font-family="var(--font-display)" font-size="13" fill="var(--ink)">only you</text>
+  <text x="190" y="128" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: none</text>
+  <text x="190" y="146" font-family="var(--font-display)" font-size="12" fill="var(--ink-3)">Be your own bank. Available on purpose, never the default.</text>
+
+  <!-- C3 -->
+  <rect x="130" y="168" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="146" y="196" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--accent)">C3</text>
+  <text x="190" y="196" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Self-custody, assisted recovery</text>
+  <rect x="490" y="180" width="66" height="22" rx="11" fill="var(--accent)" stroke="none"/>
+  <text x="523" y="195" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent-ink)" text-anchor="middle">the goal</text>
+  <text x="190" y="218" font-family="var(--font-display)" font-size="13" fill="var(--ink)">only you</text>
+  <text x="190" y="236" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: a quorum of guardians you chose</text>
+  <text x="190" y="254" font-family="var(--font-display)" font-size="12" fill="var(--ink-3)">The recommended destination: survives a lost phone.</text>
+
+  <!-- C2 -->
+  <rect x="130" y="276" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="146" y="304" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)">C2</text>
+  <text x="190" y="304" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Managed</text>
+  <text x="190" y="326" font-family="var(--font-display)" font-size="13" fill="var(--ink)">the service, but only on your authenticated instruction,</text>
+  <text x="190" y="344" font-family="var(--font-display)" font-size="13" fill="var(--ink)">with a logged consent record</text>
+  <text x="190" y="362" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: the service restores access</text>
+
+  <!-- the line between C1 and C2 -->
+  <text x="350" y="390" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">cannot sign without your logged, authenticated instruction</text>
+  <line x1="130" y1="398" x2="570" y2="398" stroke="var(--ink)" stroke-width="2"/>
+  <text x="350" y="413" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">can sign without you</text>
+
+  <!-- C1 -->
+  <rect x="130" y="422" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="146" y="450" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)">C1</text>
+  <text x="190" y="450" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Custodial</text>
+  <text x="190" y="472" font-family="var(--font-display)" font-size="13" fill="var(--bad)">the service, unilaterally</text>
+  <text x="190" y="490" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: the service restores access</text>
+  <text x="190" y="508" font-family="var(--font-display)" font-size="12" fill="var(--ink-3)">A traditional account; most "web3 login" products are this.</text>
+
+  <!-- C0 -->
+  <rect x="130" y="546" width="440" height="96" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="146" y="574" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)">C0</text>
+  <text x="190" y="574" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Throwaway</text>
+  <text x="190" y="596" font-family="var(--font-display)" font-size="13" fill="var(--ink)">you, until you lose it</text>
+  <text x="190" y="614" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recovery: none, by design</text>
+  <text x="190" y="632" font-family="var(--font-display)" font-size="12" fill="var(--ink-3)">Ephemeral or semi-anonymous; a destination, not a failure.</text>
+
+  <!-- direction of travel: C1 up to C3 -->
+  <line x1="70" y1="470" x2="70" y2="222" stroke="var(--accent)" stroke-width="2" marker-end="url(#lad-arrow-accent)"/>
+  <text x="54" y="346" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle" transform="rotate(-90 54 346)">intended direction of travel</text>
+
+  <text x="350" y="666" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">C3, not C4, is the goal: assisted recovery is what makes self-custody</text>
+  <text x="350" y="682" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">survivable for people who are not cryptographers.</text>
+</svg>
+</div></div><figcaption>The custody ladder, C0 to C4. The question at each rung is the same: who can produce a signature with your key?</figcaption></figure>
+
+<p>The line that matters most is between C1 and C2. At C1 the service can sign without you. At C2 it cannot sign without an authenticated instruction that it logs and you can audit. <a class="xref" href="part4.html#s19">Sections 19</a> and 20 built the machinery for that line: the consent log and the challenge ceremony. <a class="xref" href="part5.html#s26">Section 26</a> says which side of it a hosted account is on.</p>
+<h3 id="s24">24. Access levels and the grid</h3>
+<p>Access answers the other question: how do you authenticate in order to reach the key? IdentiKey names six levels, and a person may use several at once. That is not fragmentation, it is redundancy, and redundancy is the point. A person who can reach the key by more than one route, say a passkey on a phone and a held key on a laptop, does not lose the identity when one device is lost; a person with a single route is one broken screen away from recovery.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Mechanism</th>
+<th>Where it applies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A0</strong></td>
+<td>Password</td>
+<td>C1, C2</td>
+</tr>
+<tr>
+<td><strong>A1</strong></td>
+<td>Email magic link or SMS one-time code</td>
+<td>C1, C2, and only for recovering <em>account access</em>, never a key</td>
+</tr>
+<tr>
+<td><strong>A2</strong></td>
+<td>Social bootstrap (Apple, Google)</td>
+<td>C1, C2, as identity verification at signup, not ongoing authentication</td>
+</tr>
+<tr>
+<td><strong>A3</strong></td>
+<td>Passkey (WebAuthn): authentication <em>to a remote party</em></td>
+<td>C1, C2</td>
+</tr>
+<tr>
+<td><strong>A4</strong></td>
+<td>A key you hold, answering a challenge (<code>identikey-auth</code>)</td>
+<td>C2 to C4. The native mechanism.</td>
+</tr>
+<tr>
+<td><strong>A5</strong></td>
+<td>An offline or air-gapped signer</td>
+<td>C4</td>
+</tr>
+</tbody>
+</table></div>
+<p>Laying the two axes against each other gives the grid. A filled mark is the primary way of reaching the key at that rung, an open mark is supported, and a dot means the combination does not make sense.</p>
+<figure class="ik-figure is-widget" id="fig-grid" data-widget="grid" data-opts="{}"><div class="ik-body"></div><figcaption>Custody by access. Click any cell to read what that combination means, which ones the hosted service serves today, and which the protocol library reaches.</figcaption></figure>
+
+<p>The hosted service occupies the shaded C1 and C2 rows, reached by passkey (A3) today and by a held key (A4) through the challenge ceremony. The <code>identikey-auth</code> protocol library occupies the A4 column at every rung from C2 up. A native app, when there is one, is what would make C3 reachable by ordinary people, because it can back a key with the device's secure hardware and take part in a guardian ceremony.</p>
+<p>Two refinements to the grid are easy to get wrong and worth stating.</p>
+<p><strong>Local user verification is not an access level.</strong> A passkey authenticates you <em>to a remote party</em>; its whole design, with a DNS-bound relying-party id, assumes someone on the other end. At C3 and C4 you hold the key, so there is no remote party to authenticate to. Unlocking a key on your own device with a fingerprint is the platform's biometric gate in front of a key you already have, not WebAuthn, and it needs none of WebAuthn's machinery. That is why A3 is only <em>supported</em>, not primary, at C3: the one real case is a browser, where a passkey can derive a <strong>wrapping key</strong> (a key whose only job is to encrypt, or wrap, another key, so that the stored key is unreadable without it) to decrypt a locally stored key. Even there the passkey is a key-wrapping tool, not a proof of identity to anyone.</p>
+<p><strong>A4 is enclave-backed, not necessarily enclave-held.</strong> Secure hardware such as Apple's Secure Enclave can hold some keys so that the private material never leaves the chip, but only for the algorithms it supports: NIST P-256 (the elliptic curve behind most passkeys) classically, and ML-DSA from the version-26 operating systems (released in 2025). Ed25519, the algorithm <code>identikey-auth</code> uses, is not among them, so the Ed25519 half of an A4 key is <strong>enclave-wrapped</strong>: the enclave holds a wrapping key, and the seed is unwrapped into application memory for each signature. The distinction matters because for the moment of signing the seed is readable by the application, and by anything that can read the application's memory, which is exactly what an enclave-held key never allows. A hybrid Ed25519 plus ML-DSA key may be <em>mixed</em>, one half held and one wrapped. No part of the hosted service makes any claim about this; a native client would determine it with a runtime probe: it checks whether the device has secure hardware and whether the operating system is new enough to hold each algorithm there, and places each half of the key accordingly.</p>
+<figure class="ik-figure is-diagram" id="fig-enclave"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 790" role="img" aria-labelledby="encl-title">
+  <title id="encl-title">Held in the enclave versus wrapped by it, as designed for a native client. At launch a runtime probe asks whether the device has a Secure Enclave and whether the operating system is new enough, and places each half of the key. Enclave-held, for P-256 and for ML-DSA from the version-26 operating systems: the app sends bytes in and gets a signature out, and the private key never leaves the enclave. Enclave-wrapped, for Ed25519, which the enclave cannot hold: the enclave holds only a wrapping key, the wrapped seed sits in app storage, and for each signature the enclave unwraps the seed into app memory, where the app signs and then zeroizes it; for that moment the seed is readable by the app and by anything that can read its memory. A hybrid Ed25519 plus ML-DSA key is mixed: one half held, one half wrapped.</title>
+  <defs>
+    <marker id="encl-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="encl-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="encl-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- probe -->
+  <rect x="120" y="16" width="400" height="66" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="38" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">runtime probe at launch (native client design)</text>
+  <text x="320" y="56" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">is there a Secure Enclave? is the OS new enough</text>
+  <text x="320" y="72" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">to hold this algorithm? then place each half</text>
+  <path d="M250 84 V100 H165 V116" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+  <path d="M390 84 V100 H475 V116" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+
+  <!-- column headers -->
+  <text x="165" y="138" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">Enclave-held</text>
+  <text x="165" y="156" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">P-256; ML-DSA from the version-26 OSes</text>
+  <text x="475" y="138" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--warm)" text-anchor="middle">Enclave-wrapped</text>
+  <text x="475" y="156" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Ed25519, which the enclave cannot hold</text>
+
+  <!-- ===== left: held ===== -->
+  <rect x="20" y="170" width="290" height="440" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="34" y="192" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)">app (process memory)</text>
+
+  <rect x="40" y="206" width="250" height="40" rx="4" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="165" y="231" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">bytes to sign</text>
+
+  <line x1="120" y1="248" x2="120" y2="350" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+  <text x="112" y="300" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">in</text>
+  <line x1="210" y1="452" x2="210" y2="536" stroke="var(--accent)" stroke-width="2" marker-end="url(#encl-arrow-accent)"/>
+  <text x="218" y="498" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">out</text>
+
+  <rect x="40" y="356" width="250" height="94" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="165" y="378" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">Secure Enclave</text>
+  <rect x="80" y="390" width="170" height="44" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="165" y="410" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">private key</text>
+  <text x="165" y="426" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">signs here, after biometric</text>
+
+  <rect x="40" y="540" width="250" height="40" rx="4" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="165" y="565" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">signature</text>
+
+  <text x="165" y="600" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--good)" text-anchor="middle">the private key never leaves the chip</text>
+
+  <!-- ===== right: wrapped ===== -->
+  <rect x="330" y="170" width="290" height="440" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="344" y="192" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)">app (storage and process memory)</text>
+
+  <rect x="350" y="206" width="250" height="40" rx="4" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="475" y="224" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">wrapped seed, in app storage</text>
+  <text x="475" y="239" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">opaque without the enclave</text>
+
+  <line x1="420" y1="248" x2="420" y2="268" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+
+  <rect x="350" y="272" width="250" height="78" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="475" y="292" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">Secure Enclave</text>
+  <text x="475" y="312" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">wrapping key only</text>
+  <text x="475" y="330" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">unwraps the seed, after biometric</text>
+
+  <line x1="420" y1="352" x2="420" y2="372" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#encl-arrow-bad)"/>
+
+  <rect x="350" y="376" width="250" height="132" rx="6" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="2"/>
+  <text x="475" y="398" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">seed in app memory</text>
+  <text x="475" y="418" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">readable by the app, and by anything</text>
+  <text x="475" y="434" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">that can read its memory</text>
+  <rect x="380" y="448" width="190" height="44" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="475" y="467" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">app signs (Ed25519)</text>
+  <text x="475" y="483" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">bytes to sign go in here</text>
+
+  <line x1="520" y1="510" x2="520" y2="536" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+
+  <rect x="350" y="540" width="250" height="40" rx="4" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="475" y="565" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">signature; seed zeroized</text>
+
+  <text x="475" y="600" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="middle">the seed is exposed for each signature</text>
+
+  <!-- ===== hybrid strip ===== -->
+  <rect x="20" y="632" width="600" height="140" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="656" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">Hybrid Ed25519 + ML-DSA key: mixed</text>
+  <rect x="40" y="670" width="250" height="44" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="165" y="689" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">ML-DSA half</text>
+  <text x="165" y="705" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">held, where the OS supports it</text>
+  <rect x="350" y="670" width="250" height="44" rx="4" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="475" y="689" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Ed25519 half</text>
+  <text x="475" y="705" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">always wrapped</text>
+  <text x="320" y="696" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">+</text>
+  <text x="320" y="736" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Otherwise both halves are wrapped, or the ML-DSA half is plain software.</text>
+  <text x="320" y="754" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Custody is labelled per half: held, wrapped or mixed.</text>
+</svg>
+</div></div><figcaption>Where the private bytes are at the moment of signing. An enclave-held key signs inside the chip; an enclave-wrapped Ed25519 seed is unwrapped into app memory for each signature. This is the design for a native client; no native client exists yet.</figcaption></figure>
+
+<h3 id="s25">25. Two proofs, two grants</h3>
+<p>The grid explains a decision at the token endpoint that otherwise looks like stubbornness. Two different artefacts can prove something about you, and IdentiKey routes them through two different grants rather than accepting either at both.</p>
+<figure class="ik-figure is-diagram" id="fig-two-proofs"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 600" role="img" aria-labelledby="tp-title">
+  <title id="tp-title">Two proofs, two grants: a passkey assertion, which says I hold a passkey registered at this provider, is an A3 proof bound to the provider's domain and enters only the authorization-code flow and the device flow; an identikey-auth Response, which says I hold this identity's key, is an A4 proof, a raw signature over dCBOR answering a nonce and bound to an audience, and enters only IdentiKey's challenge-response grant. Each proof is refused at the other's door. Both doors lead to the same token endpoint and the same three tokens.</title>
+  <defs>
+    <marker id="tp-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="tp-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="tp-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- the two proofs -->
+  <rect x="30" y="24" width="280" height="122" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="170" y="48" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">passkey assertion</text>
+  <text x="170" y="68" font-family="var(--font-display)" font-size="13" fill="var(--ink)" text-anchor="middle">"I hold a passkey registered at this provider"</text>
+  <text x="170" y="90" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)" text-anchor="middle">A3: authenticates you to a remote party</text>
+  <text x="170" y="108" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">bound to the provider's domain; via a browser</text>
+  <text x="170" y="126" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">counter and origin binding resist replay</text>
+
+  <rect x="330" y="24" width="280" height="122" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="470" y="48" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">identikey-auth Response</text>
+  <text x="470" y="68" font-family="var(--font-display)" font-size="13" fill="var(--ink)" text-anchor="middle">"I hold this identity's key"</text>
+  <text x="470" y="90" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)" text-anchor="middle">A4: raw dCBOR signature answering a nonce</text>
+  <text x="470" y="108" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">bound to an audience; refuses downgrades</text>
+  <text x="470" y="126" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">checked against your XID document's key</text>
+
+  <!-- accepted paths -->
+  <line x1="120" y1="148" x2="120" y2="236" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#tp-arrow-ink)"/>
+  <line x1="520" y1="148" x2="520" y2="236" stroke="var(--accent)" stroke-width="2" marker-end="url(#tp-arrow-accent)"/>
+  <text x="112" y="196" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">accepted</text>
+  <text x="528" y="196" font-family="var(--font-display)" font-size="12" fill="var(--accent)">accepted</text>
+
+  <!-- refused paths, crossing -->
+  <line x1="220" y1="148" x2="420" y2="236" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#tp-arrow-bad)"/>
+  <line x1="420" y1="148" x2="220" y2="236" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#tp-arrow-bad)"/>
+  <rect x="222" y="181" width="196" height="20" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="196" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">refused at the other's door</text>
+
+  <!-- the two doors -->
+  <rect x="30" y="240" width="280" height="102" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="170" y="264" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">the passkey's two doors</text>
+  <text x="170" y="288" font-family="var(--font-display)" font-size="13" fill="var(--ink)" text-anchor="middle">authorization-code flow</text>
+  <text x="170" y="304" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">section 10</text>
+  <text x="170" y="324" font-family="var(--font-display)" font-size="13" fill="var(--ink)" text-anchor="middle">device flow</text>
+  <text x="170" y="338" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">section 11</text>
+
+  <rect x="330" y="240" width="280" height="102" rx="6" fill="var(--paper-2)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="470" y="264" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">IdentiKey's own grant</text>
+  <text x="470" y="284" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">urn:identikey:params:oauth:</text>
+  <text x="470" y="300" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">grant-type:challenge-response</text>
+  <text x="470" y="320" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">GET /challenge, then POST /token</text>
+  <text x="470" y="336" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">section 25; opt-in per client</text>
+
+  <!-- to the token endpoint -->
+  <path d="M170 344 V366 H260 V386" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#tp-arrow-ink)"/>
+  <path d="M470 344 V366 H380 V386" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#tp-arrow-accent)"/>
+
+  <rect x="140" y="390" width="360" height="56" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="413" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">the same token endpoint</text>
+  <text x="320" y="433" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">each proof reaches it through exactly one door</text>
+
+  <line x1="320" y1="448" x2="320" y2="472" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#tp-arrow-ink)"/>
+
+  <!-- the same three tokens -->
+  <text x="320" y="492" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">the same three tokens</text>
+  <rect x="140" y="500" width="110" height="34" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="195" y="522" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">ID token</text>
+  <rect x="265" y="500" width="110" height="34" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="522" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">access token</text>
+  <rect x="390" y="500" width="110" height="34" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="445" y="522" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">refresh token</text>
+
+  <!-- why -->
+  <text x="320" y="566" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">A passkey holds Auth. The key that answers a Challenge may hold Sign, Elect and Transfer.</text>
+  <text x="320" y="584" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">If both minted identical tokens, an Auth-only credential would look like full key authority.</text>
+</svg>
+</div></div><figcaption>Two proofs, two grants. A passkey assertion enters through the browser flows; an identikey-auth Response enters through IdentiKey's own grant; neither is accepted at the other's door.</figcaption></figure>
+
+<p>A <strong>passkey assertion</strong> proves "I hold a passkey registered against an account at this provider." It is bound to the provider's domain, mediated by a browser, and carries its own replay protection in the form of a signature counter and origin binding. It is an A3 proof: it authenticates you to the party holding your key. It is accepted through the authorization-code flow of <a class="xref" href="part2.html#s10">section 10</a> and the device flow of <a class="xref" href="part2.html#s11">section 11</a>, and nowhere else.</p>
+<p>An <strong>identikey-auth Response</strong> proves "I hold this identity's key." It is a raw signature over domain-separated canonical dCBOR (domain-separated meaning the bytes signed begin with a fixed label naming the protocol, so a signature made for identikey-auth cannot be mistaken for, or reused as, a signature over some other document), answering a nonce the verifier issued, bound to a named audience, and cipher-agile with a policy that refuses downgrades, including an optional post-quantum half. It is an A4 proof. It is accepted through IdentiKey's own grant:</p>
+<pre><code>GET /challenge
+ → canonical dCBOR Challenge, aud = the issuer, valid 120 seconds
+
+POST /token
+ grant_type = urn:identikey:params:oauth:grant-type:challenge-response
+ client_id = &lt;a client whose registration lists this grant&gt;
+ response = &lt;the signed Response, base64url without padding&gt;
+</code></pre>
+<p>The provider verifies the Response against the Challenge it issued, checking the signature against the public key the Response carries rather than with any key of its own, consumes the nonce so the Response cannot be replayed, maps the signing key to the account it belongs to, and mints the same three tokens as any other grant. The grant is opt-in per client, like the device grant. A client's registration (<a class="xref" href="part2.html#s8">section 8</a>) lists the grants it may use, and the provider refuses a token request whose grant the registration does not list, so an app that only ever expects passkey sign-ins never has this door open at all. It is the bridge that lets a key holder at <em>any</em> rung, including a fully self-custodial one, obtain ordinary OIDC tokens for an ordinary app without the provider ever holding a key.</p>
+<p>Why not let a passkey satisfy that grant too, and have one verifier for everything? Three reasons, each stronger than convenience.</p>
+<ul>
+<li><strong>The token endpoint is the most security-critical path in the system.</strong> Two proof formats there mean two parsers, two replay models and two downgrade surfaces on the one path that mints tokens. The code flow already serves passkeys; nothing is gained.</li>
+<li><strong>It would defeat the privilege split at the one place it most needs to hold.</strong> A passkey is a credential holding <code>Auth</code>. The key that answers a Challenge may hold <code>Sign</code>, <code>Elect</code> and <code>Transfer</code>. If both minted identical tokens, an <code>Auth</code>-only credential would be indistinguishable from full key authority.</li>
+<li><strong>It would make invariant I2 (<a class="xref" href="part5.html#s26">section 26</a>) a matter of policy rather than structure.</strong> A passkey can be re-registered through an account-recovery path. If a passkey could satisfy the key-holder grant, an emailed link would transitively reach a self-held key, which is exactly the collapse I2 forbids. Refusing the assertion at the grant makes the collapse impossible rather than merely prohibited.</li>
+</ul>
+<p>One consequence follows from <a class="xref" href="part4.html#s18">section 18</a> and should be said rather than left for the reader to infer. The provider can only redeem a Response from a key it can map to an account, and a hosted account today has no self-held signing key: the one key the user would hold was discarded at signup. The grant is therefore the door for a user who holds a key, which is to say a user on the upper rungs, and it stands ready for them. For the hosted account as it exists today, sign-in is the passkey flow.</p>
+<h3 id="s26">26. Where IdentiKey stands</h3>
+<p>Four invariants are checked against every design decision. An <strong>invariant</strong> is a property that must still hold after any change; a proposed change that would break one is rejected, whatever else it buys. They are short, and they are the part of this tutorial most worth remembering.</p>
+<ul>
+<li><strong>I1. The subject is a XID, stable across both custody and key changes.</strong> Moving from managed to self-custody is a change of holder, not of identity. Rotating a key is a signed event, not an identity break. If climbing the ladder meant a new identifier, nobody would climb.</li>
+<li><strong>I2. Access recovery and key recovery are different systems.</strong> Email, SMS and social re-verification may restore access to a managed account. They must never reach a key. If an emailed link can reach a key, the email provider is the real root of trust and the whole ladder silently collapses to C1. Any change that lets an A1 mechanism recover a self-held key is a release blocker.</li>
+<li><strong>I3. Every rung passes the exit test.</strong> Can a user leave with identity, data and connectivity intact, and stop paying, without permission? Losing convenience, hosting and support on the way out is fine; that is what paying bought. Losing keys or data is capture. At C2 this requires a self-service migration ceremony to C3 (the sequence <a class="xref" href="part5.html#s27">section 27</a> sets out: a new key made where the service cannot see it, the service's sealed copy destroyed, resolution and recovery moved out of its hands), and without it, in the project's own words, "C2 is rent, not a service."</li>
+<li><strong>I4. Downward moves are allowed and must be explicit.</strong> Choosing convenience over custody is legitimate. It must take the same deliberate ceremony as moving up, and never happen as a side effect of a support interaction.</li>
+</ul>
+<p>Against that map, here is where an account created on the hosted service stands.</p>
+<p>Its <strong>document has the shape of C2</strong>. IdentiKey's key holds <code>Sign</code> and <code>Auth</code> only. It cannot add or remove keys, cannot transfer the identity and cannot change the resolvers. The key that can do those things is not IdentiKey's, and IdentiKey has never been able to sign with it. The consent log and the challenge ceremony are real, enforced in code, and leave evidence of every use.</p>
+<p>Its <strong>custody is C1 in effect</strong>, and IdentiKey's own architecture record says so: no user-held <code>Elect</code> key means the identity is C1, because a privilege the user cannot exercise is a privilege written on paper. Signup generates the governing key and discards its private half, so no one holds it, including you. Three things follow. IdentiKey can act for you, within the ceremony, and nothing but the ceremony's own code constrains that. You cannot yet exercise any of the governing privileges your document grants you. And the key graph is frozen: with no <code>Elect</code> key in anyone's hands, no one can rotate the operational key, add a resolver or move the identity until a user-held key exists.</p>
+<figure class="ik-figure is-diagram" id="fig-paper-vs-effect"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 720" role="img" aria-labelledby="pve-title">
+  <title id="pve-title">Document C2, custody C1: two readings of the same hosted account. What the document says, the C2 shape: the user key holds Elect, Transfer, Update and Verify and is held by you; the operational key holds Sign and Auth and is held by IdentiKey, usable only through the ceremony and the log. What is true today, C1 in effect: nobody holds the user key, because its private half was discarded at signup, so its privileges cannot be exercised; no one can rotate the operational key, add a resolver or move the identity, and the key graph is frozen. The operational key is the same in both readings. On the ladder, the document has the C2 shape and custody is C1 in effect. What is missing is one key in your hands.</title>
+  <defs>
+    <marker id="pve-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+  </defs>
+
+  <!-- column headers -->
+  <rect x="20" y="16" width="290" height="50" rx="4" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="165" y="38" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">What the document says</text>
+  <text x="165" y="56" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the C2 shape</text>
+  <rect x="330" y="16" width="290" height="50" rx="4" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="475" y="38" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">What is true today</text>
+  <text x="475" y="56" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">C1 in effect</text>
+
+  <!-- row label: user key -->
+  <text x="20" y="96" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">user key (the inception key)</text>
+  <line x1="214" y1="91" x2="620" y2="91" stroke="var(--rule)" stroke-width="1.5"/>
+
+  <!-- left: user key -->
+  <rect x="20" y="108" width="290" height="104" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="165" y="132" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Elect  Transfer  Update  Verify</text>
+  <text x="165" y="152" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">governing: can change the key graph</text>
+  <text x="36" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">holder</text>
+  <text x="90" y="186" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)">you</text>
+
+  <!-- right: user key -->
+  <rect x="330" y="108" width="290" height="104" rx="4" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="475" y="132" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink-3)" text-anchor="middle">Elect  Transfer  Update  Verify</text>
+  <line x1="364" y1="128" x2="586" y2="128" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="475" y="152" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">written down, but no one can use them</text>
+  <text x="346" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">holder</text>
+  <text x="400" y="186" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--bad)">nobody</text>
+  <text x="400" y="203" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">private half discarded at signup</text>
+
+  <!-- consequences -->
+  <line x1="475" y1="214" x2="475" y2="232" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#pve-arrow-ink)"/>
+  <rect x="330" y="236" width="290" height="120" rx="4" fill="var(--paper)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="475" y="258" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">key graph frozen</text>
+  <text x="350" y="282" font-family="var(--font-display)" font-size="12" fill="var(--ink)">no one can rotate the operational key</text>
+  <text x="350" y="302" font-family="var(--font-display)" font-size="12" fill="var(--ink)">no one can add a resolver</text>
+  <text x="350" y="322" font-family="var(--font-display)" font-size="12" fill="var(--ink)">no one can move the identity</text>
+  <text x="350" y="344" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">until a user-held key exists</text>
+
+  <rect x="20" y="236" width="290" height="120" rx="4" fill="var(--paper)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="165" y="258" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">what the split promises</text>
+  <text x="40" y="282" font-family="var(--font-display)" font-size="12" fill="var(--ink)">you can rotate the operational key</text>
+  <text x="40" y="302" font-family="var(--font-display)" font-size="12" fill="var(--ink)">you can add or change resolvers</text>
+  <text x="40" y="322" font-family="var(--font-display)" font-size="12" fill="var(--ink)">you can move the identity</text>
+  <text x="40" y="344" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">and IdentiKey cannot outvote you</text>
+
+  <!-- row label: operational key -->
+  <text x="20" y="390" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">operational key</text>
+  <line x1="124" y1="385" x2="620" y2="385" stroke="var(--rule)" stroke-width="1.5"/>
+
+  <rect x="20" y="402" width="290" height="104" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="165" y="426" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Sign  Auth</text>
+  <text x="165" y="446" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">doing: cannot change the key graph</text>
+  <text x="36" y="476" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">holder</text>
+  <text x="90" y="476" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">IdentiKey, sealed</text>
+  <text x="90" y="494" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">only through the ceremony and log</text>
+
+  <rect x="330" y="402" width="290" height="104" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="475" y="426" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Sign  Auth</text>
+  <text x="475" y="446" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the same: this part is real</text>
+  <text x="346" y="476" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">holder</text>
+  <text x="400" y="476" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">IdentiKey, sealed</text>
+  <text x="400" y="494" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">ceremony and log enforced in code</text>
+  <rect x="310" y="444" width="20" height="20" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="460" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink-2)" text-anchor="middle">=</text>
+
+  <!-- ladder strip -->
+  <text x="20" y="548" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">On the custody ladder</text>
+  <line x1="80" y1="600" x2="560" y2="600" stroke="var(--rule)" stroke-width="2"/>
+  <circle cx="80" cy="600" r="7" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <circle cx="200" cy="600" r="11" fill="var(--bad)" stroke="var(--bad)" stroke-width="2"/>
+  <circle cx="320" cy="600" r="11" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/>
+  <circle cx="440" cy="600" r="7" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <circle cx="560" cy="600" r="7" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="80" y="580" font-family="var(--font-mono)" font-size="13" fill="var(--ink-3)" text-anchor="middle">C0</text>
+  <text x="200" y="580" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">C1</text>
+  <text x="320" y="580" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">C2</text>
+  <text x="440" y="580" font-family="var(--font-mono)" font-size="13" fill="var(--ink-3)" text-anchor="middle">C3</text>
+  <text x="560" y="580" font-family="var(--font-mono)" font-size="13" fill="var(--ink-3)" text-anchor="middle">C4</text>
+  <text x="200" y="630" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">custody in effect</text>
+  <text x="320" y="630" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">document shape</text>
+  <text x="320" y="646" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">(stored rung: c2)</text>
+
+  <text x="320" y="690" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">Missing: one key in your hands, carrying Elect.</text>
+</svg>
+</div></div><figcaption>Two readings of one hosted account. The document has the C2 shape, but the key it gives the governing privileges is held by nobody, so custody is C1 in effect and the key graph cannot change.</figcaption></figure>
+
+<p>This is a more honest position than the one most "sign in with" products occupy, and it is worth being precise about why. The difference between this and an ordinary custodial account is not where the keys are, which is the same place. It is that the structure is already built for the keys to be somewhere else: the privileges are split, the identifier is independent of the operator, the log records every use against a proof only you could make, the salt and the encapsulation key are exportable, and the grant that a self-held key would use is wired and waiting. What is missing is one key in your hands.</p>
+<p>What a user has today, concretely:</p>
+<ul>
+<li>A XID that is theirs by construction and would remain valid if the service vanished.</li>
+<li>Passkey sign-in, with no password anywhere, at every app that has registered with the provider, and device-code sign-in from a terminal where a client allows it.</li>
+<li>A different, unlinkable subject at every app, derived from a salt that can leave with the operator's cooperation.</li>
+<li>A signing key used only on a fresh proof of presence, with an append-only, hash-chained record of every use.</li>
+<li>An encryption key others can address, exportable on consent, and shareable with a named friend without the secret ever reaching the browser.</li>
+<li>SSH and git keys listed on the account, revocable, with the private halves never sent.</li>
+<li>A self-describing XID document (not yet signed), served with cache headers short enough that a rotation would propagate in about a minute.</li>
+</ul>
+<h3 id="s27">27. Climbing</h3>
+<p>The view from here up the ladder, at the level of what each rung would require rather than how it is done.</p>
+<p><strong>To C2 in full</strong>, the account needs the one thing it lacks: a key you hold that carries <code>Elect</code>, generated on your own device and never seen by the service. Once it exists, the privileges your document already grants you become real, the key graph can change again, and the service is a signer that cannot outvote you.</p>
+<p><strong>To C3</strong>, three things must move at once, or custody has not moved. A new signing key is generated where the service cannot see it, and the service destroys its sealed copy of the operational key in the same transaction that publishes the new document. Resolution moves to at least two resolvers, at least one not run by the service, so the freshness lever of <a class="xref" href="part3.html#s16">section 16</a> is no longer in one pair of hands. And recovery moves from the service to a quorum of guardians you choose, holding shares of your key in a scheme such as Shamir's secret sharing (which splits a secret into several shares so that any chosen number of them, the quorum of <a class="xref" href="part5.html#s23">section 23</a>, reconstruct it, while fewer than that number reveal nothing about it at all), so that losing a device is survivable without anyone being able to reconstruct your key alone. The XID does not change. Every app that knows you still knows you. That is invariant I1 (<a class="xref" href="part5.html#s26">section 26</a>) doing its work: the XID is the hash of the inception key (<a class="xref" href="part3.html#s13">section 13</a>), not of any key now in use, so no number of key changes can alter it.</p>
+<p><strong>To C4</strong>, the guardians are removed, and you alone are responsible.</p>
+<figure class="ik-figure is-diagram" id="fig-climbs"><div class="ik-body"><div class="diagram-scroll"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 780" role="img" aria-labelledby="clb-title">
+  <title id="clb-title">Three climbs from where a hosted account stands today. Today, C1 in effect: IdentiKey holds the sealed operational key with Sign and Auth, nobody holds Elect so the key graph is frozen, the document is served only at IdentiKey's well-known address, and recovery is your other passkeys. To C2 in full: a key you hold that carries Elect, generated on your device and never seen by the service; designed, with no path yet for a hosted account. To C3, three moves at once: a new signing key made on your device while the service's sealed operational copy is destroyed in the same transaction that publishes the new document; resolution moved to at least two resolvers, at least one not run by the service; and recovery moved to a guardian quorum, where a secret is split into shares so that any quorum of them reconstructs it and fewer reveal nothing. The first two are checked by library code that no endpoint serves yet; guardian recovery is design only. To C4: the guardians are removed and you alone are responsible; design only. The XID is unchanged throughout.</title>
+  <defs>
+    <marker id="clb-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="clb-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- I1 bar -->
+  <rect x="20" y="16" width="30" height="726" rx="6" fill="var(--accent-soft)" stroke="none"/>
+  <text x="40" y="379" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle" transform="rotate(-90 40 379)">XID unchanged at every step (I1): it is the hash of the inception key</text>
+
+  <!-- legend -->
+  <rect x="352" y="756" width="12" height="12" rx="3" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+  <text x="370" y="767" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">checked in library code</text>
+  <rect x="514" y="756" width="12" height="12" rx="3" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="532" y="767" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">design only</text>
+
+  <!-- ===== Today ===== -->
+  <rect x="66" y="16" width="554" height="112" rx="6" fill="var(--paper-2)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="82" y="40" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Today</text>
+  <text x="604" y="40" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="end">C1 in effect</text>
+  <text x="82" y="62" font-family="var(--font-display)" font-size="12" fill="var(--ink)">IdentiKey holds the operational key (<tspan font-family="var(--font-mono)">Sign</tspan>, <tspan font-family="var(--font-mono)">Auth</tspan>), sealed</text>
+  <text x="82" y="80" font-family="var(--font-display)" font-size="12" fill="var(--ink)">nobody holds <tspan font-family="var(--font-mono)">Elect</tspan>, so the key graph is frozen</text>
+  <text x="82" y="98" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the document is served only at IdentiKey's well-known address</text>
+  <text x="82" y="116" font-family="var(--font-display)" font-size="12" fill="var(--ink)">recovery: your other passkeys, nothing else</text>
+
+  <line x1="343" y1="130" x2="343" y2="150" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#clb-arrow-ink)"/>
+
+  <!-- ===== To C2 in full ===== -->
+  <rect x="66" y="154" width="554" height="96" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="82" y="178" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">To C2 in full</text>
+  <rect x="470" y="164" width="138" height="22" rx="11" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="539" y="179" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="middle">no hosted path yet</text>
+  <text x="82" y="202" font-family="var(--font-display)" font-size="12" fill="var(--ink)">add a key you hold that carries <tspan font-family="var(--font-mono)">Elect</tspan>, generated on your device,</text>
+  <text x="82" y="220" font-family="var(--font-display)" font-size="12" fill="var(--ink)">never seen by the service</text>
+  <text x="82" y="238" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the governing privileges become real; the key graph can change again</text>
+
+  <line x1="343" y1="252" x2="343" y2="272" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#clb-arrow-ink)"/>
+
+  <!-- ===== To C3 ===== -->
+  <rect x="66" y="276" width="554" height="362" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="82" y="300" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">To C3: three moves, all at once</text>
+  <text x="82" y="320" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">authorized by your <tspan font-family="var(--font-mono)">Elect</tspan> key signing the new document, plus a logged</text>
+  <text x="82" y="336" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">passkey or held-key proof; the new document starts a provenance mark</text>
+
+  <!-- move 1 -->
+  <rect x="82" y="348" width="522" height="84" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="96" y="370" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">1  A new signing key, made on your device</text>
+  <rect x="580" y="358" width="14" height="14" rx="3" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+  <text x="96" y="390" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the service's sealed operational copy is destroyed in the same</text>
+  <text x="96" y="406" font-family="var(--font-display)" font-size="12" fill="var(--ink)">transaction that publishes the new document; its old key keeps no <tspan font-family="var(--font-mono)">Sign</tspan></text>
+  <text x="96" y="422" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the sealed encapsulation key is dropped too, and must be exported first</text>
+
+  <!-- move 2 -->
+  <rect x="82" y="440" width="522" height="64" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="96" y="462" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">2  Resolution moves out of one pair of hands</text>
+  <rect x="580" y="450" width="14" height="14" rx="3" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+  <text x="96" y="482" font-family="var(--font-display)" font-size="12" fill="var(--ink)">at least 2 distinct resolver hosts, at least 1 outside identikey.me and</text>
+  <text x="96" y="498" font-family="var(--font-display)" font-size="12" fill="var(--ink)">identikey.io; localhost and private addresses refused</text>
+
+  <!-- move 3 -->
+  <rect x="82" y="512" width="522" height="114" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="96" y="534" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">3  Recovery moves to a guardian quorum</text>
+  <rect x="580" y="522" width="14" height="14" rx="3" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="96" y="554" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">for example Shamir sharing, 3 of 5:</text>
+
+  <!-- shamir inset -->
+  <rect x="104" y="572" width="62" height="34" rx="17" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="135" y="593" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">secret</text>
+  <line x1="168" y1="589" x2="198" y2="589" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#clb-arrow-ink)"/>
+  <rect x="204" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="232" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="260" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="288" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="316" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="271" y="618" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">one share per guardian</text>
+  <text x="356" y="584" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--good)">any 3 together: the secret</text>
+  <text x="356" y="602" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)">any 2 or fewer: nothing at all</text>
+
+  <line x1="343" y1="640" x2="343" y2="660" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#clb-arrow-ink)"/>
+
+  <!-- ===== To C4 ===== -->
+  <rect x="66" y="664" width="554" height="78" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="82" y="688" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">To C4</text>
+  <rect x="580" y="676" width="14" height="14" rx="3" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="82" y="710" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the guardians are removed; you alone are responsible</text>
+  <text x="82" y="728" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">lose the key and the identity is lost</text>
+</svg>
+</div></div><figcaption>What changes at each climb, with the XID fixed throughout. Library code checks the first two C3 moves, but no endpoint serves them yet; guardian recovery and C4 are design only. The 3-of-5 split is illustrative.</figcaption></figure>
+
+<p>The companion document, <strong>Spec: IdentiKey agent authority</strong>, covers these rungs in full: how a wallet holds and uses a key with <code>identikey-auth</code>, how the challenge-response grant is used in practice, how the migration ceremony destroys the server's copy and relocates resolution, how guardians are chosen and shares are issued, what the exit test checks at each step, and then the layer that becomes possible once a person holds their own authority: delegating narrow, revocable slices of it to software that acts on their behalf. That is the second half of the Spec, and it is where this tutorial hands over.</p>
+<nav class="pager"><a class="prev" href="part4.html"><small>Previous</small>Part 4. The hosted service</a><a class="next" href="glossary.html"><small>Next</small>Glossary and sources</a></nav>
+<footer class="site-footer"><p class="ik-note">Generated from <code>tutorials/identikey-tutorial-v3.md</code> on 2 Nov 2026 by <code>tutorials/web/build.py</code>. Interactives run entirely in your browser; nothing is sent anywhere.</p></footer>
+</main>
+<aside class="rail" aria-label="On this page"><h2>On this page</h2><ol></ol></aside>
+</div>
+<script src="assets/ikcrypto.js"></script>
+<script src="assets/widgets/challenge.js"></script><script src="assets/widgets/grid.js"></script><script src="assets/widgets/hash.js"></script><script src="assets/widgets/hashchain.js"></script><script src="assets/widgets/jwt.js"></script><script src="assets/widgets/oidcflow.js"></script><script src="assets/widgets/pairwise.js"></script><script src="assets/widgets/signverify.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

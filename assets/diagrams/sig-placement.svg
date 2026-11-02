@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 664" role="img" aria-labelledby="sp-title">
+  <title id="sp-title">Where a signature lives, in three panels. Attached: the data and the signature in one object, as in a JWT, three base64url strings joined by dots, or a signed Gordian Envelope. Detached and beside the data: a .sig file next to a download, or a signature column in the same database row. Detached and fetched: the verifier hashes the data with SHA-256 and uses the hash as the key to look the signature up in a public log or a separate database.</title>
+  <defs>
+    <marker id="sp-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="sp-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- 1. Attached -->
+  <rect x="20" y="16" width="600" height="212" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="36" y="40" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">1  Attached</text>
+  <text x="36" y="58" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the signature is packed into the same object as the data</text>
+
+  <rect x="36" y="70" width="568" height="38" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="420" y="70" width="184" height="38" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="228" y="94" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">data</text>
+  <text x="512" y="94" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+
+  <text x="36" y="134" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">a JWT (section 9): three base64url strings joined by dots</text>
+  <rect x="36" y="144" width="172" height="26" rx="3" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="122" y="161" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">eyJhbGciOiJFZERTQSJ9</text>
+  <circle cx="218" cy="166" r="3.5" fill="var(--accent)" stroke="none"/>
+  <rect x="228" y="144" width="172" height="26" rx="3" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="314" y="161" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">eyJzdWIiOiI4a1F4…</text>
+  <circle cx="410" cy="166" r="3.5" fill="var(--accent)" stroke="none"/>
+  <rect x="420" y="144" width="184" height="26" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="512" y="161" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">SflKxwRJSMeKKF2Q…</text>
+  <text x="122" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">header</text>
+  <text x="314" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">payload</text>
+  <text x="512" y="186" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+
+  <text x="36" y="212" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">or a signed Gordian Envelope: content and signature in one structure</text>
+
+  <!-- 2. Detached, beside the data -->
+  <rect x="20" y="240" width="600" height="170" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="36" y="264" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">2  Detached, beside the data</text>
+  <text x="36" y="282" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">stored separately, but kept right next to it</text>
+
+  <path d="M44 298 H68 L78 308 V340 H44 Z" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <path d="M68 298 V308 H78" fill="none" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="92" y="324" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">release.tar.gz</text>
+  <path d="M44 352 H68 L78 362 V394 H44 Z" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <path d="M68 352 V362 H78" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="92" y="378" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--accent)">release.tar.gz.sig</text>
+
+  <text x="330" y="310" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">or a column in the same database row</text>
+  <rect x="330" y="322" width="274" height="26" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <rect x="330" y="348" width="274" height="30" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <rect x="500" y="348" width="104" height="30" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <line x1="380" y1="322" x2="380" y2="378" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <line x1="500" y1="322" x2="500" y2="348" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="355" y="339" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">id</text>
+  <text x="440" y="339" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">data</text>
+  <text x="552" y="339" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+  <text x="355" y="368" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">42</text>
+  <text x="440" y="368" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">…</text>
+  <text x="552" y="368" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">a1f0…</text>
+  <text x="330" y="398" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">names and values are illustrative</text>
+
+  <!-- 3. Detached, fetched by hash -->
+  <rect x="20" y="422" width="600" height="226" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="36" y="446" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">3  Detached, fetched by hash</text>
+  <text x="36" y="464" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the verifier looks the signature up, using the data's hash as the key</text>
+
+  <rect x="36" y="486" width="120" height="44" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="96" y="513" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">data</text>
+
+  <line x1="156" y1="508" x2="222" y2="508" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sp-arrow-ink)"/>
+  <text x="189" y="500" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">SHA-256</text>
+
+  <rect x="226" y="486" width="140" height="44" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="296" y="504" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">hash</text>
+  <text x="296" y="521" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">9f86d081…</text>
+
+  <line x1="366" y1="508" x2="440" y2="508" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#sp-arrow-ink)"/>
+  <text x="403" y="500" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">lookup key</text>
+
+  <path d="M446 488 V528 A79 9 0 0 0 604 528 V488" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <ellipse cx="525" cy="488" rx="79" ry="9" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="525" y="512" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">public log or</text>
+  <text x="525" y="528" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">separate database</text>
+
+  <line x1="525" y1="538" x2="525" y2="572" stroke="var(--accent)" stroke-width="2" marker-end="url(#sp-arrow-accent)"/>
+  <text x="533" y="560" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">returns</text>
+
+  <rect x="446" y="576" width="158" height="40" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="525" y="601" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+
+  <line x1="446" y1="596" x2="372" y2="596" stroke="var(--accent)" stroke-width="2" marker-end="url(#sp-arrow-accent)"/>
+  <rect x="36" y="576" width="330" height="40" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="201" y="593" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">verifier</text>
+  <text x="201" y="608" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">checks it against its own copy of the data</text>
+  <text x="36" y="636" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the hash value is illustrative</text>
+</svg>

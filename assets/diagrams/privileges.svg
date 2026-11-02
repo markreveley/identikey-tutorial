@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 430" role="img" aria-labelledby="priv-title">
+  <title id="priv-title">Doing versus governing: the XID document lists a user key with Elect, Transfer, Verify and Update, which governs the key graph, and an operational key with Sign and Auth, which does the daily work.</title>
+  <defs>
+    <marker id="priv-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+<marker id="priv-arrow-ink-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+  </defs>
+
+  <!-- the XID document -->
+  <rect x="30" y="30" width="540" height="190" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="46" y="54" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">XID document</text>
+  <text x="554" y="54" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">signed; lists each key and its privileges</text>
+
+  <!-- user key: governing -->
+  <rect x="46" y="70" width="250" height="130" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="171" y="95" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">user key</text>
+  <text x="171" y="118" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Elect Transfer Verify Update</text>
+  <text x="171" y="150" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">governing</text>
+  <text x="171" y="170" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">held by the user</text>
+  <text x="171" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">not by IdentiKey</text>
+
+  <!-- operational key: doing -->
+  <rect x="304" y="70" width="250" height="130" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="429" y="95" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">operational key</text>
+  <text x="429" y="118" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Sign Auth</text>
+  <text x="429" y="150" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">doing</text>
+  <text x="429" y="170" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">held by IdentiKey</text>
+  <text x="429" y="186" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">for the hosted account</text>
+
+  <!-- what each key may do -->
+  <line x1="171" y1="222" x2="171" y2="276" stroke="var(--accent)" stroke-width="2" marker-end="url(#priv-arrow-accent)"/>
+  <rect x="46" y="280" width="250" height="60" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="171" y="305" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">change the key graph</text>
+  <text x="171" y="325" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">rotate keys, transfer the identity</text>
+
+  <line x1="429" y1="222" x2="429" y2="276" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#priv-arrow-ink-2)"/>
+  <rect x="304" y="280" width="250" height="60" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="429" y="305" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">sign challenges, authenticate</text>
+  <text x="429" y="325" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">act as the identity day to day</text>
+
+  <!-- note -->
+  <text x="300" y="384" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">Only the governing key can add or remove keys.</text>
+  <text x="300" y="404" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">A key with Sign and Auth can act as you; it cannot replace you.</text>
+</svg>

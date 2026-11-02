@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 690" role="img" aria-labelledby="th-title">
+  <title id="th-title">Two hashing steps, for signer and verifier. The signer's program may pre-hash the data with SHA-256 into a 32-byte digest, then Ed25519 sign takes the digest and the private key and runs SHA-512 internally, producing a 64-byte signature. The verifier repeats the pre-hash on its own copy of the data, then Ed25519 verify takes that digest, the signer's public key and the signature, runs the same internal SHA-512, and answers yes or no. Only the public key and the signature cross from signer to verifier; the digest is recomputed, never received. identikey-auth skips the pre-hash and gives Ed25519 its challenge payload directly.</title>
+  <defs>
+    <marker id="th-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="th-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- signer lane -->
+  <rect x="20" y="16" width="612" height="236" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="50" y="40" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Signer</text>
+  <text x="108" y="40" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the program chooses whether to pre-hash</text>
+
+  <rect x="50" y="54" width="130" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="115" y="76" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">data</text>
+  <text x="115" y="94" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">any size</text>
+  <line x1="180" y1="80" x2="206" y2="80" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="210" y="54" width="160" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="290" y="76" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-256 pre-hash</text>
+  <text x="290" y="94" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">optional, visible</text>
+  <line x1="370" y1="80" x2="396" y2="80" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="400" y="54" width="100" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="450" y="76" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">32-byte</text>
+  <text x="450" y="94" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">digest</text>
+  <line x1="450" y1="106" x2="450" y2="132" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="50" y="160" width="130" height="52" rx="4" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="115" y="182" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">private key</text>
+  <text x="115" y="200" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">secret, stays here</text>
+  <line x1="180" y1="186" x2="206" y2="186" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="210" y="136" width="290" height="100" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="355" y="156" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">Ed25519 sign</text>
+  <rect x="226" y="168" width="258" height="54" rx="4" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="355" y="190" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-512, inside the scheme</text>
+  <text x="355" y="208" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">always runs; the program cannot skip it</text>
+  <line x1="500" y1="186" x2="516" y2="186" stroke="var(--accent)" stroke-width="2" marker-end="url(#th-arrow-accent)"/>
+
+  <rect x="520" y="160" width="100" height="52" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="570" y="182" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">64-byte</text>
+  <text x="570" y="200" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+
+  <rect x="38" y="278" width="72" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="40" y="290" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">public key</text>
+  <rect x="496" y="278" width="68" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="562" y="290" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="end">signature</text>
+  <text x="330" y="282" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">only these two cross to the verifier;</text>
+  <text x="330" y="300" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the digest is never sent, never trusted</text>
+
+  <!-- verifier lane -->
+  <rect x="20" y="326" width="612" height="296" rx="6" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="50" y="350" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Verifier</text>
+  <text x="116" y="350" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">repeats the signer's pre-hash exactly</text>
+
+  <rect x="50" y="364" width="130" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="115" y="386" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">its own copy</text>
+  <text x="115" y="404" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">of the data</text>
+  <line x1="180" y1="390" x2="206" y2="390" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="210" y="364" width="160" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="290" y="386" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-256 pre-hash</text>
+  <text x="290" y="404" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">recomputed here</text>
+  <line x1="370" y1="390" x2="396" y2="390" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="400" y="364" width="100" height="52" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="450" y="386" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">32-byte</text>
+  <text x="450" y="404" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">digest</text>
+  <line x1="450" y1="416" x2="450" y2="442" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="50" y="474" width="130" height="52" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="115" y="496" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">public key</text>
+  <text x="115" y="514" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the signer's</text>
+  <line x1="180" y1="500" x2="206" y2="500" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+
+  <rect x="210" y="446" width="290" height="100" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="355" y="466" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">Ed25519 verify</text>
+  <rect x="226" y="478" width="258" height="54" rx="4" fill="var(--paper-2)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="355" y="500" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-512, inside the scheme</text>
+  <text x="355" y="518" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the same internal step as in sign</text>
+
+  <rect x="520" y="474" width="100" height="52" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="570" y="496" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">64-byte</text>
+  <text x="570" y="514" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">signature</text>
+  <line x1="520" y1="500" x2="504" y2="500" stroke="var(--accent)" stroke-width="2" marker-end="url(#th-arrow-accent)"/>
+
+  <line x1="355" y1="546" x2="355" y2="570" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#th-arrow-ink)"/>
+  <rect x="285" y="574" width="140" height="34" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="355" y="596" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">yes / no</text>
+
+  <!-- what crosses, drawn over both lanes -->
+  <path d="M50 186 H32 V500 H46" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#th-arrow-accent)"/>
+  <line x1="570" y1="212" x2="570" y2="470" stroke="var(--accent)" stroke-width="2" marker-end="url(#th-arrow-accent)"/>
+
+  <!-- the IdentiKey case -->
+  <text x="326" y="648" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">identikey-auth skips the dashed step: Ed25519 signs its dCBOR challenge</text>
+  <text x="326" y="666" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">payload directly, so there the only hash is the SHA-512 inside the scheme.</text>
+</svg>

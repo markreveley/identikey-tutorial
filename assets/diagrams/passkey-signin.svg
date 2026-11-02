@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 852" role="img" aria-labelledby="ps-title">
+  <title id="ps-title">A passkey sign-in between IdentiKey, the browser and the authenticator. IdentiKey sends a single-use challenge for the RP ID auth.identikey.me with user verification required. The browser checks that the page's origin matches the RP ID; on a look-alike domain no passkey is offered. The browser passes the RP ID and the SHA-256 of the client data, which holds the challenge and the origin. The authenticator finds the passkey, you unlock it with fingerprint, face or PIN, and it signs the authenticator data plus that hash. The assertion goes back through the browser, and IdentiKey accepts it only if the challenge, origin, RP ID hash, user-verified flag, signature and counter all check out; a counter of zero is always accepted.</title>
+  <defs>
+    <marker id="ps-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="ps-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="ps-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- lifelines -->
+  <line x1="110" y1="64" x2="110" y2="618" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="320" y1="64" x2="320" y2="618" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="530" y1="64" x2="530" y2="618" stroke="var(--rule)" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <!-- participants -->
+  <rect x="30" y="18" width="160" height="44" rx="4" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="110" y="37" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">IdentiKey</text>
+  <text x="110" y="53" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the relying party (RP)</text>
+
+  <rect x="240" y="18" width="160" height="44" rx="4" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="37" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">Browser</text>
+  <text x="320" y="53" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">knows the page's origin</text>
+
+  <rect x="450" y="18" width="160" height="44" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="530" y="37" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">Authenticator</text>
+  <text x="530" y="53" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">holds the private key</text>
+
+  <!-- 1. Challenge -->
+  <line x1="30" y1="82" x2="610" y2="82" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="74" width="100" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="88" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">1  Challenge</text>
+
+  <line x1="110" y1="120" x2="314" y2="120" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ps-arrow-ink)"/>
+  <rect x="130" y="102" width="170" height="14" fill="var(--paper)" stroke="none"/>
+  <text x="215" y="113" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">challenge + options</text>
+  <rect x="40" y="126" width="390" height="34" fill="var(--paper)" stroke="none"/>
+  <text x="215" y="138" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">random, single use, valid 5 minutes;</text>
+  <text x="215" y="154" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">RP ID auth.identikey.me, user verification required</text>
+
+  <!-- 2. Origin check -->
+  <line x1="30" y1="176" x2="610" y2="176" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="168" width="120" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="182" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">2  Origin check</text>
+
+  <rect x="226" y="194" width="188" height="62" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="214" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">does this page's origin</text>
+  <text x="320" y="230" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">match the RP ID?</text>
+  <text x="320" y="247" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">auth.identikey.me</text>
+
+  <line x1="414" y1="225" x2="444" y2="225" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#ps-arrow-bad)"/>
+  <rect x="448" y="194" width="162" height="62" rx="4" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="529" y="214" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">look-alike domain:</text>
+  <text x="529" y="230" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">no passkey offered</text>
+  <text x="529" y="247" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">nothing is signed</text>
+  <text x="300" y="274" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">match: continue</text>
+
+  <!-- 3. Ask the authenticator -->
+  <line x1="30" y1="290" x2="610" y2="290" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="282" width="180" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="296" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">3  Ask the authenticator</text>
+
+  <line x1="320" y1="326" x2="524" y2="326" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ps-arrow-ink)"/>
+  <rect x="318" y="306" width="226" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="431" y="318" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">RP ID + SHA-256(clientDataJSON)</text>
+  <rect x="296" y="332" width="270" height="16" fill="var(--paper)" stroke="none"/>
+  <text x="431" y="344" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">clientDataJSON: type, challenge, origin</text>
+
+  <!-- 4. Unlock and sign -->
+  <line x1="30" y1="364" x2="610" y2="364" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="356" width="140" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="370" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">4  Unlock and sign</text>
+
+  <rect x="372" y="382" width="238" height="140" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="386" y="402" font-family="var(--font-display)" font-size="12" fill="var(--ink)">finds the passkey for this RP ID</text>
+  <text x="386" y="420" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">you unlock it: fingerprint, face, PIN</text>
+  <text x="386" y="438" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">signs authenticatorData</text>
+  <text x="386" y="454" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--accent)">  + SHA-256(clientDataJSON)</text>
+  <text x="386" y="476" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">authenticatorData: SHA-256(RP ID),</text>
+  <text x="386" y="492" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the UP and UV flags, the counter</text>
+  <text x="386" y="510" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">(synced passkeys report counter 0)</text>
+
+  <rect x="346" y="400" width="6" height="66" rx="3" fill="var(--warm)" stroke="none"/>
+  <rect x="190" y="410" width="148" height="34" fill="var(--paper)" stroke="none"/>
+  <text x="338" y="422" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">private key used here;</text>
+  <text x="338" y="438" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">it never leaves</text>
+
+  <!-- 5. Assertion -->
+  <line x1="30" y1="540" x2="610" y2="540" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="532" width="100" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="546" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">5  Assertion</text>
+
+  <line x1="530" y1="576" x2="116" y2="576" stroke="var(--accent)" stroke-width="2" marker-end="url(#ps-arrow-accent)"/>
+  <rect x="200" y="558" width="240" height="14" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="569" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">the assertion, relayed by the browser</text>
+  <rect x="120" y="582" width="400" height="34" fill="var(--paper)" stroke="none"/>
+  <text x="320" y="594" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">credential id, authenticatorData, clientDataJSON,</text>
+  <text x="320" y="610" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">the signature, the user handle</text>
+
+  <!-- 6. IdentiKey verifies -->
+  <line x1="30" y1="632" x2="610" y2="632" stroke="var(--rule)" stroke-width="1.5"/>
+  <rect x="30" y="624" width="160" height="18" rx="3" fill="var(--paper)" stroke="none"/>
+  <text x="34" y="638" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">6  IdentiKey verifies</text>
+
+  <rect x="30" y="652" width="400" height="190" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="46" y="674" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)">accepted only if all of these hold</text>
+  <text x="46" y="696" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the challenge is the one it issued, unused, unexpired</text>
+  <text x="46" y="714" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the origin in clientDataJSON is on its allow-list</text>
+  <text x="46" y="732" font-family="var(--font-display)" font-size="12" fill="var(--ink)">authenticatorData carries SHA-256(auth.identikey.me)</text>
+  <text x="46" y="750" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the UV flag is set: you were verified, not just present</text>
+  <text x="46" y="768" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the signature verifies with the stored public key</text>
+  <text x="58" y="784" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">(ES256 or RS256, chosen at registration)</text>
+  <text x="46" y="806" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">counter: 0 is always accepted; a nonzero</text>
+  <text x="58" y="824" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">counter must exceed the stored one</text>
+
+  <text x="446" y="700" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--good)">all hold: signed in as the</text>
+  <text x="446" y="716" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--good)">XID that owns the passkey</text>
+  <text x="446" y="748" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)">any fails: refused</text>
+  <text x="446" y="784" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the browser, not you,</text>
+  <text x="446" y="800" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">compares the origin, so a</text>
+  <text x="446" y="816" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">convincing fake page</text>
+  <text x="446" y="832" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">still gets nothing</text>
+</svg>

@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="rot-title">
+  <title id="rot-title">Rotation and pre-rotation: each document revision is signed by the previous Elect key and commits to the hash of the next one, so a forged revision whose key does not match the committed hash is refused.</title>
+  <defs>
+    <marker id="rot-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+<marker id="rot-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- v1 -->
+  <rect x="40" y="30" width="300" height="90" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="54" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">v1</text>
+  <text x="324" y="54" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">signed by E1, the inception key</text>
+  <text x="56" y="80" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">Elect key<tspan x="156">E1</tspan></text>
+  <text x="56" y="102" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">next<tspan x="156">hash(E2)</tspan></text>
+
+  <!-- v1 -> v2 -->
+  <line x1="190" y1="122" x2="190" y2="186" stroke="var(--accent)" stroke-width="2" marker-end="url(#rot-arrow-accent)"/>
+  <text x="204" y="150" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">provenance mark</text>
+  <text x="204" y="166" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">v2 descends from v1</text>
+
+  <!-- v2 -->
+  <rect x="40" y="190" width="300" height="90" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="214" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">v2</text>
+  <text x="324" y="214" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">signed by E1</text>
+  <text x="56" y="240" font-family="var(--font-mono)" font-size="12" fill="var(--warm)">Elect key<tspan x="156">E2</tspan></text>
+  <text x="56" y="262" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">next<tspan x="156">hash(E3)</tspan></text>
+
+  <!-- v2 -> v3 -->
+  <line x1="190" y1="282" x2="190" y2="346" stroke="var(--accent)" stroke-width="2" marker-end="url(#rot-arrow-accent)"/>
+  <text x="204" y="310" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">provenance mark</text>
+  <text x="204" y="326" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">v3 descends from v2</text>
+
+  <!-- v3 -->
+  <rect x="40" y="350" width="300" height="90" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="374" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">v3</text>
+  <text x="324" y="374" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">signed by E2</text>
+  <text x="56" y="400" font-family="var(--font-mono)" font-size="12" fill="var(--warm)">Elect key<tspan x="156">E3</tspan></text>
+  <text x="56" y="422" font-family="var(--font-mono)" font-size="12" fill="var(--ink)">next<tspan x="156">hash(E4)</tspan></text>
+
+  <!-- pre-rotation note, beside v1 -->
+  <text x="364" y="80" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">pre-rotation</text>
+  <text x="364" y="98" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">each revision commits to</text>
+  <text x="364" y="114" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">hash(next Elect key)</text>
+
+  <!-- forged branch from v2 -->
+  <path d="M342 250 C 400 250, 420 300, 456 346" fill="none" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#rot-arrow-bad)"/>
+  <line x1="398" y1="276" x2="416" y2="294" stroke="var(--bad)" stroke-width="2"/>
+  <line x1="416" y1="276" x2="398" y2="294" stroke="var(--bad)" stroke-width="2"/>
+
+  <rect x="364" y="350" width="216" height="90" rx="4" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="380" y="374" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--bad)">v3'  forged</text>
+  <text x="564" y="374" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="end">stolen E2 signs</text>
+  <text x="380" y="400" font-family="var(--font-mono)" font-size="12" fill="var(--bad)">Elect key<tspan x="480">A</tspan></text>
+  <text x="380" y="422" font-family="var(--font-mono)" font-size="12" fill="var(--bad)">hash(A) ≠ hash(E3)</text>
+
+  <text x="472" y="464" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">refused</text>
+  <text x="472" y="482" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">key does not match the</text>
+  <text x="472" y="498" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">hash committed in v2</text>
+
+  <!-- what stays the same -->
+  <text x="190" y="470" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">The XID does not move.</text>
+  <text x="190" y="490" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">It hashes the inception key E1,</text>
+  <text x="190" y="506" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">not the current Elect key.</text>
+
+  <text x="300" y="560" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Rotation: the key holding Elect signs a new revision that adds a key and drops the old one.</text>
+  <text x="300" y="578" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Pre-rotation only helps when the next key lives somewhere separate.</text>
+</svg>

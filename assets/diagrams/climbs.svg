@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 780" role="img" aria-labelledby="clb-title">
+  <title id="clb-title">Three climbs from where a hosted account stands today. Today, C1 in effect: IdentiKey holds the sealed operational key with Sign and Auth, nobody holds Elect so the key graph is frozen, the document is served only at IdentiKey's well-known address, and recovery is your other passkeys. To C2 in full: a key you hold that carries Elect, generated on your device and never seen by the service; designed, with no path yet for a hosted account. To C3, three moves at once: a new signing key made on your device while the service's sealed operational copy is destroyed in the same transaction that publishes the new document; resolution moved to at least two resolvers, at least one not run by the service; and recovery moved to a guardian quorum, where a secret is split into shares so that any quorum of them reconstructs it and fewer reveal nothing. The first two are checked by library code that no endpoint serves yet; guardian recovery is design only. To C4: the guardians are removed and you alone are responsible; design only. The XID is unchanged throughout.</title>
+  <defs>
+    <marker id="clb-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="clb-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- I1 bar -->
+  <rect x="20" y="16" width="30" height="726" rx="6" fill="var(--accent-soft)" stroke="none"/>
+  <text x="40" y="379" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle" transform="rotate(-90 40 379)">XID unchanged at every step (I1): it is the hash of the inception key</text>
+
+  <!-- legend -->
+  <rect x="352" y="756" width="12" height="12" rx="3" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+  <text x="370" y="767" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">checked in library code</text>
+  <rect x="514" y="756" width="12" height="12" rx="3" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="532" y="767" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">design only</text>
+
+  <!-- ===== Today ===== -->
+  <rect x="66" y="16" width="554" height="112" rx="6" fill="var(--paper-2)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="82" y="40" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Today</text>
+  <text x="604" y="40" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="end">C1 in effect</text>
+  <text x="82" y="62" font-family="var(--font-display)" font-size="12" fill="var(--ink)">IdentiKey holds the operational key (<tspan font-family="var(--font-mono)">Sign</tspan>, <tspan font-family="var(--font-mono)">Auth</tspan>), sealed</text>
+  <text x="82" y="80" font-family="var(--font-display)" font-size="12" fill="var(--ink)">nobody holds <tspan font-family="var(--font-mono)">Elect</tspan>, so the key graph is frozen</text>
+  <text x="82" y="98" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the document is served only at IdentiKey's well-known address</text>
+  <text x="82" y="116" font-family="var(--font-display)" font-size="12" fill="var(--ink)">recovery: your other passkeys, nothing else</text>
+
+  <line x1="343" y1="130" x2="343" y2="150" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#clb-arrow-ink)"/>
+
+  <!-- ===== To C2 in full ===== -->
+  <rect x="66" y="154" width="554" height="96" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="82" y="178" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">To C2 in full</text>
+  <rect x="470" y="164" width="138" height="22" rx="11" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="539" y="179" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="middle">no hosted path yet</text>
+  <text x="82" y="202" font-family="var(--font-display)" font-size="12" fill="var(--ink)">add a key you hold that carries <tspan font-family="var(--font-mono)">Elect</tspan>, generated on your device,</text>
+  <text x="82" y="220" font-family="var(--font-display)" font-size="12" fill="var(--ink)">never seen by the service</text>
+  <text x="82" y="238" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the governing privileges become real; the key graph can change again</text>
+
+  <line x1="343" y1="252" x2="343" y2="272" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#clb-arrow-ink)"/>
+
+  <!-- ===== To C3 ===== -->
+  <rect x="66" y="276" width="554" height="362" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="82" y="300" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">To C3: three moves, all at once</text>
+  <text x="82" y="320" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">authorized by your <tspan font-family="var(--font-mono)">Elect</tspan> key signing the new document, plus a logged</text>
+  <text x="82" y="336" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">passkey or held-key proof; the new document starts a provenance mark</text>
+
+  <!-- move 1 -->
+  <rect x="82" y="348" width="522" height="84" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="96" y="370" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">1  A new signing key, made on your device</text>
+  <rect x="580" y="358" width="14" height="14" rx="3" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+  <text x="96" y="390" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the service's sealed operational copy is destroyed in the same</text>
+  <text x="96" y="406" font-family="var(--font-display)" font-size="12" fill="var(--ink)">transaction that publishes the new document; its old key keeps no <tspan font-family="var(--font-mono)">Sign</tspan></text>
+  <text x="96" y="422" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the sealed encapsulation key is dropped too, and must be exported first</text>
+
+  <!-- move 2 -->
+  <rect x="82" y="440" width="522" height="64" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="96" y="462" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">2  Resolution moves out of one pair of hands</text>
+  <rect x="580" y="450" width="14" height="14" rx="3" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+  <text x="96" y="482" font-family="var(--font-display)" font-size="12" fill="var(--ink)">at least 2 distinct resolver hosts, at least 1 outside identikey.me and</text>
+  <text x="96" y="498" font-family="var(--font-display)" font-size="12" fill="var(--ink)">identikey.io; localhost and private addresses refused</text>
+
+  <!-- move 3 -->
+  <rect x="82" y="512" width="522" height="114" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="96" y="534" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">3  Recovery moves to a guardian quorum</text>
+  <rect x="580" y="522" width="14" height="14" rx="3" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="96" y="554" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">for example Shamir sharing, 3 of 5:</text>
+
+  <!-- shamir inset -->
+  <rect x="104" y="572" width="62" height="34" rx="17" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="135" y="593" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)" text-anchor="middle">secret</text>
+  <line x1="168" y1="589" x2="198" y2="589" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#clb-arrow-ink)"/>
+  <rect x="204" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="232" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="260" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="288" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <rect x="316" y="578" width="22" height="22" rx="3" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="271" y="618" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">one share per guardian</text>
+  <text x="356" y="584" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--good)">any 3 together: the secret</text>
+  <text x="356" y="602" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)">any 2 or fewer: nothing at all</text>
+
+  <line x1="343" y1="640" x2="343" y2="660" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#clb-arrow-ink)"/>
+
+  <!-- ===== To C4 ===== -->
+  <rect x="66" y="664" width="554" height="78" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="82" y="688" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">To C4</text>
+  <rect x="580" y="676" width="14" height="14" rx="3" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="82" y="710" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the guardians are removed; you alone are responsible</text>
+  <text x="82" y="728" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">lose the key and the identity is lost</text>
+</svg>

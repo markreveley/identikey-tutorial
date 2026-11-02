@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 790" role="img" aria-labelledby="encl-title">
+  <title id="encl-title">Held in the enclave versus wrapped by it, as designed for a native client. At launch a runtime probe asks whether the device has a Secure Enclave and whether the operating system is new enough, and places each half of the key. Enclave-held, for P-256 and for ML-DSA from the version-26 operating systems: the app sends bytes in and gets a signature out, and the private key never leaves the enclave. Enclave-wrapped, for Ed25519, which the enclave cannot hold: the enclave holds only a wrapping key, the wrapped seed sits in app storage, and for each signature the enclave unwraps the seed into app memory, where the app signs and then zeroizes it; for that moment the seed is readable by the app and by anything that can read its memory. A hybrid Ed25519 plus ML-DSA key is mixed: one half held, one half wrapped.</title>
+  <defs>
+    <marker id="encl-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="encl-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="encl-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- probe -->
+  <rect x="120" y="16" width="400" height="66" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="38" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">runtime probe at launch (native client design)</text>
+  <text x="320" y="56" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">is there a Secure Enclave? is the OS new enough</text>
+  <text x="320" y="72" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">to hold this algorithm? then place each half</text>
+  <path d="M250 84 V100 H165 V116" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+  <path d="M390 84 V100 H475 V116" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+
+  <!-- column headers -->
+  <text x="165" y="138" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">Enclave-held</text>
+  <text x="165" y="156" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">P-256; ML-DSA from the version-26 OSes</text>
+  <text x="475" y="138" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--warm)" text-anchor="middle">Enclave-wrapped</text>
+  <text x="475" y="156" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Ed25519, which the enclave cannot hold</text>
+
+  <!-- ===== left: held ===== -->
+  <rect x="20" y="170" width="290" height="440" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="34" y="192" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)">app (process memory)</text>
+
+  <rect x="40" y="206" width="250" height="40" rx="4" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="165" y="231" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">bytes to sign</text>
+
+  <line x1="120" y1="248" x2="120" y2="350" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+  <text x="112" y="300" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">in</text>
+  <line x1="210" y1="452" x2="210" y2="536" stroke="var(--accent)" stroke-width="2" marker-end="url(#encl-arrow-accent)"/>
+  <text x="218" y="498" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">out</text>
+
+  <rect x="40" y="356" width="250" height="94" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="165" y="378" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">Secure Enclave</text>
+  <rect x="80" y="390" width="170" height="44" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="165" y="410" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">private key</text>
+  <text x="165" y="426" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">signs here, after biometric</text>
+
+  <rect x="40" y="540" width="250" height="40" rx="4" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="165" y="565" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">signature</text>
+
+  <text x="165" y="600" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--good)" text-anchor="middle">the private key never leaves the chip</text>
+
+  <!-- ===== right: wrapped ===== -->
+  <rect x="330" y="170" width="290" height="440" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="344" y="192" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink-2)">app (storage and process memory)</text>
+
+  <rect x="350" y="206" width="250" height="40" rx="4" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="475" y="224" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">wrapped seed, in app storage</text>
+  <text x="475" y="239" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">opaque without the enclave</text>
+
+  <line x1="420" y1="248" x2="420" y2="268" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+
+  <rect x="350" y="272" width="250" height="78" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="475" y="292" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">Secure Enclave</text>
+  <text x="475" y="312" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">wrapping key only</text>
+  <text x="475" y="330" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">unwraps the seed, after biometric</text>
+
+  <line x1="420" y1="352" x2="420" y2="372" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#encl-arrow-bad)"/>
+
+  <rect x="350" y="376" width="250" height="132" rx="6" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="2"/>
+  <text x="475" y="398" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">seed in app memory</text>
+  <text x="475" y="418" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">readable by the app, and by anything</text>
+  <text x="475" y="434" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">that can read its memory</text>
+  <rect x="380" y="448" width="190" height="44" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="475" y="467" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">app signs (Ed25519)</text>
+  <text x="475" y="483" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">bytes to sign go in here</text>
+
+  <line x1="520" y1="510" x2="520" y2="536" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#encl-arrow-ink)"/>
+
+  <rect x="350" y="540" width="250" height="40" rx="4" fill="var(--paper-2)" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="475" y="565" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">signature; seed zeroized</text>
+
+  <text x="475" y="600" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="middle">the seed is exposed for each signature</text>
+
+  <!-- ===== hybrid strip ===== -->
+  <rect x="20" y="632" width="600" height="140" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="320" y="656" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">Hybrid Ed25519 + ML-DSA key: mixed</text>
+  <rect x="40" y="670" width="250" height="44" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="165" y="689" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">ML-DSA half</text>
+  <text x="165" y="705" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">held, where the OS supports it</text>
+  <rect x="350" y="670" width="250" height="44" rx="4" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="475" y="689" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">Ed25519 half</text>
+  <text x="475" y="705" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">always wrapped</text>
+  <text x="320" y="696" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">+</text>
+  <text x="320" y="736" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Otherwise both halves are wrapped, or the ML-DSA half is plain software.</text>
+  <text x="320" y="754" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Custody is labelled per half: held, wrapped or mixed.</text>
+</svg>

@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 856" role="img" aria-labelledby="enc-title">
+  <title id="enc-title">Encapsulation in three stages. Wrap: any sender picks a 32-byte data key, reads your X25519 public key from your XID document, and seals the data key to it with a fresh ephemeral X25519 key, a BLAKE3 key derivation labelled identikey-keyspace-v1-wrap and XChaCha20-Poly1305, giving a wrap addressed to you. Rewrap, inside IdentiKey: begin with the account cookie names the purpose rewrap, the wrap bytes and the friend's XID; the service stores the wrap's SHA-256 and the friend's X25519 public read from the friend's stored document, never from the client, and returns a five-minute challenge. You answer with a passkey assertion or an Elect-key signature. The rewrap call checks the wrap digest and that the friend's key is unchanged, marks the attempt used, opens the sealed scalar with the managed wrap key, opens the wrap to get the data key, seals the data key to the friend, zeroizes the data key and the scalar, logs encapsulation_rewrap and returns only the new wrap. Unwrap exists in the library but has no HTTP route on the hosted service. Open: the friend opens the new wrap with their own X25519 private key; it cannot be recalled, so cutting the friend off means a new data key.</title>
+  <defs>
+    <marker id="enc-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="enc-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="enc-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- 1. Wrap -->
+  <text x="30" y="26" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">1  Wrap: any sender, anywhere</text>
+
+  <rect x="30" y="40" width="250" height="50" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="155" y="61" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">data key DK</text>
+  <text x="155" y="79" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">32 bytes; it encrypts the content</text>
+
+  <rect x="360" y="40" width="250" height="50" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="485" y="61" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">your X25519 public</text>
+  <text x="485" y="79" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">read from your XID document</text>
+
+  <path d="M155 90 V108 H300 V122" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#enc-arrow-ink)"/>
+  <path d="M485 90 V108 H340 V122" fill="none" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#enc-arrow-ink)"/>
+
+  <rect x="100" y="124" width="440" height="104" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="320" y="146" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">wrap → you</text>
+  <text x="320" y="166" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">a fresh ephemeral X25519 key agrees a secret with your public;</text>
+  <text x="320" y="182" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">BLAKE3 over identikey-keyspace-v1-wrap, that secret and both</text>
+  <text x="320" y="198" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">public keys gives the key that XChaCha20-Poly1305 seals DK with</text>
+  <text x="320" y="216" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">{alg, recipient, ephemeral, nonce, ciphertext, epoch}</text>
+
+  <line x1="320" y1="228" x2="320" y2="262" stroke="var(--accent)" stroke-width="2" marker-end="url(#enc-arrow-accent)"/>
+  <text x="334" y="250" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">you ask IdentiKey to pass it on</text>
+
+  <!-- service boundary -->
+  <rect x="20" y="266" width="600" height="452" rx="8" fill="var(--paper-2)" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="36" y="290" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)">2  Rewrap, inside IdentiKey</text>
+
+  <!-- begin -->
+  <rect x="40" y="302" width="560" height="84" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="322" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)">POST /account/encapsulation/begin</text>
+  <text x="56" y="340" font-family="var(--font-display)" font-size="12" fill="var(--ink)">with the account cookie: purpose rewrap, the wrap bytes, the friend's XID</text>
+  <text x="56" y="358" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">stores the wrap's SHA-256 and the friend's X25519 public, read from the</text>
+  <text x="56" y="374" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">friend's stored document; returns an attempt id and a 5-minute challenge</text>
+
+  <!-- refused input -->
+  <line x1="56" y1="408" x2="196" y2="408" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#enc-arrow-bad)"/>
+  <path d="M118 400 L134 416 M134 400 L118 416" fill="none" stroke="var(--bad)" stroke-width="2"/>
+  <text x="210" y="412" font-family="var(--font-display)" font-size="12" fill="var(--bad)">a friend's key from the client: never used, only the XID</text>
+
+  <!-- proof -->
+  <rect x="40" y="428" width="560" height="50" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="56" y="448" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">you consent: a passkey assertion (A3) or an Elect-key signature (A4)</text>
+  <text x="56" y="466" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">A4 signs a transcript tagged identikey-encapsulation-consent-v1</text>
+
+  <!-- rewrap call -->
+  <rect x="40" y="490" width="560" height="168" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="56" y="510" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)">POST /account/encapsulation/rewrap</text>
+  <text x="56" y="530" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the wrap must hash to the stored digest; the friend's key must be unchanged</text>
+  <text x="56" y="548" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the attempt is marked used: one rewrap per consent</text>
+  <text x="76" y="568" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">the managed wrap key opens the sealed IKEK blob: your X25519 scalar</text>
+  <text x="76" y="586" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">your scalar opens wrap → you: DK</text>
+  <text x="76" y="604" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">DK is sealed to the friend's public: wrap → friend</text>
+  <text x="76" y="622" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">DK and the scalar are zeroized</text>
+  <text x="56" y="644" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)">log: encapsulation_rewrap   audience = friend's XID</text>
+  <rect x="60" y="556" width="6" height="70" rx="3" fill="var(--warm)" stroke="none"/>
+
+  <!-- in the clear -->
+  <text x="590" y="586" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">DK and scalar in</text>
+  <text x="590" y="604" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">the clear only here</text>
+
+  <!-- unwrap note -->
+  <text x="36" y="682" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">unwrap (the same gate, returning DK to you) exists</text>
+  <text x="36" y="698" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">in the library; the hosted service has no route for it</text>
+
+  <!-- 3. Open -->
+  <line x1="540" y1="658" x2="540" y2="750" stroke="var(--accent)" stroke-width="2" marker-end="url(#enc-arrow-accent)"/>
+  <text x="526" y="740" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="end">only this is returned</text>
+  <text x="30" y="746" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">3  Open: the friend</text>
+
+  <rect x="300" y="752" width="310" height="50" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="455" y="773" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">wrap → friend</text>
+  <text x="455" y="791" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">opened with the friend's own X25519 key</text>
+
+  <text x="30" y="772" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">from here on, your</text>
+  <text x="30" y="788" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">consent is not involved</text>
+
+  <text x="320" y="834" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)" text-anchor="middle">It cannot be recalled. To cut the friend off, re-encrypt the content under a new data key.</text>
+</svg>

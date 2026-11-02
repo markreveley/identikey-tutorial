@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" role="img" aria-labelledby="res-title">
+  <title id="res-title">Resolution: the signed XID document names its resolvers; a client fetches from K of N of them, compares the versions by provenance mark, accepts the newest version the quorum agrees on, and fails closed on a stale or forked answer.</title>
+  <defs>
+    <marker id="res-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+<marker id="res-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+  </defs>
+
+  <!-- the signed document names its resolvers -->
+  <rect x="150" y="30" width="300" height="64" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="300" y="52" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">XID document, signed</text>
+  <text x="300" y="70" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">names its own resolvers (resolution methods)</text>
+  <text x="300" y="86" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">R1  R2  R3</text>
+
+  <line x1="300" y1="96" x2="120" y2="150" stroke="var(--rule)" stroke-width="1.5"/>
+  <line x1="300" y1="96" x2="300" y2="150" stroke="var(--rule)" stroke-width="1.5"/>
+  <line x1="300" y1="96" x2="480" y2="150" stroke="var(--rule)" stroke-width="1.5"/>
+
+  <!-- resolvers -->
+  <rect x="40" y="152" width="160" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="120" y="175" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">R1</text>
+  <text x="120" y="194" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">resolver run by IdentiKey</text>
+
+  <rect x="220" y="152" width="160" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="300" y="175" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">R2</text>
+  <text x="300" y="194" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">resolver run elsewhere</text>
+
+  <rect x="400" y="152" width="160" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="480" y="175" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">R3</text>
+  <text x="480" y="194" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">resolver with a stale copy</text>
+
+  <!-- answers to the client -->
+  <line x1="120" y1="210" x2="250" y2="326" stroke="var(--accent)" stroke-width="2" marker-end="url(#res-arrow-accent)"/>
+  <line x1="300" y1="210" x2="300" y2="326" stroke="var(--accent)" stroke-width="2" marker-end="url(#res-arrow-accent)"/>
+  <line x1="480" y1="210" x2="350" y2="326" stroke="var(--bad)" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#res-arrow-bad)"/>
+
+  <text x="150" y="268" font-family="var(--font-mono)" font-size="12" fill="var(--accent)" text-anchor="end">v3</text>
+  <text x="312" y="268" font-family="var(--font-mono)" font-size="12" fill="var(--accent)">v3</text>
+  <text x="440" y="262" font-family="var(--font-mono)" font-size="12" fill="var(--bad)">v2</text>
+  <text x="440" y="278" font-family="var(--font-display)" font-size="12" fill="var(--bad)">stale</text>
+
+  <!-- client -->
+  <rect x="130" y="330" width="340" height="76" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="300" y="353" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">client</text>
+  <text x="300" y="373" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">fetches from K of N resolvers (here 2 of 3)</text>
+  <text x="300" y="391" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">compares the versions by provenance mark</text>
+
+  <!-- outcomes -->
+  <line x1="220" y1="408" x2="168" y2="466" stroke="var(--accent)" stroke-width="2" marker-end="url(#res-arrow-accent)"/>
+  <line x1="380" y1="408" x2="432" y2="466" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#res-arrow-bad)"/>
+
+  <rect x="40" y="470" width="250" height="72" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="165" y="494" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--accent)" text-anchor="middle">accepted: v3</text>
+  <text x="165" y="513" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">the newest version</text>
+  <text x="165" y="529" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">the quorum agrees on</text>
+
+  <rect x="310" y="470" width="250" height="72" rx="4" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="435" y="494" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--bad)" text-anchor="middle">fails closed</text>
+  <text x="435" y="513" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">only stale answers, or two valid</text>
+  <text x="435" y="529" font-family="var(--font-display)" font-size="12" fill="var(--bad)" text-anchor="middle">documents not on one chain (duplicity)</text>
+
+  <text x="300" y="574" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">A resolver cannot forge a document, only serve an old one. Freshness is a security property.</text>
+</svg>

@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 776" role="img" aria-labelledby="ast-title">
+  <title id="ast-title">The states of one managed-challenge attempt as the code stores them. Begin stores the attempt with no state, which retrieve reports as pending. A verified passkey assertion or held-key signature at finish, with the consent unexpired, moves it to authorized and writes a signing_instruction_authorized row; a bad proof or expired consent is an HTTP error that leaves the row unchanged. A claim in its own committed transaction rechecks custody, expiry and the credential and moves it to claimed, or to failed with a signing_failed row. From claimed, unsealing the seed and signing both values moves it to completed with a signing_completed row; a blob that will not open or a signer that refuses moves it to failed; a claim whose result was never recorded is set to indeterminate when the server next starts. A second finish on a claimed attempt gets 409. Retrieve needs the verifier: it returns the Response and bind signature only for completed, the bare state for failed and indeterminate, and pending for the three earlier states.</title>
+  <defs>
+    <marker id="ast-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="ast-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+    <marker id="ast-arrow-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--bad)"/>
+    </marker>
+    <marker id="ast-arrow-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--warm)"/>
+    </marker>
+  </defs>
+
+  <!-- begin -->
+  <rect x="40" y="16" width="230" height="36" rx="18" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="155" y="39" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)" text-anchor="middle">POST …/begin</text>
+  <line x1="155" y1="52" x2="155" y2="86" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ast-arrow-ink)"/>
+  <text x="172" y="74" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">stores the attempt, returns the consent challenge</text>
+
+  <!-- pending (no state) -->
+  <rect x="40" y="88" width="230" height="52" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="155" y="110" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">no state yet</text>
+  <text x="155" y="128" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">retrieve says pending</text>
+  <text x="300" y="108" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">bad proof or expired consent at finish:</text>
+  <text x="300" y="124" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">an HTTP error; the row is unchanged</text>
+
+  <!-- to authorized -->
+  <line x1="155" y1="140" x2="155" y2="206" stroke="var(--accent)" stroke-width="2" marker-end="url(#ast-arrow-accent)"/>
+  <text x="172" y="160" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">finish/a3 or /a4: your proof verifies</text>
+  <text x="172" y="176" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">and the consent has not expired</text>
+  <text x="172" y="194" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)">log: signing_instruction_authorized</text>
+
+  <!-- authorized -->
+  <rect x="40" y="208" width="230" height="52" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="155" y="230" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">authorized</text>
+  <text x="155" y="248" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">retrieve says pending</text>
+
+  <!-- authorized -> failed -->
+  <path d="M270 234 H520 V254" fill="none" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#ast-arrow-bad)"/>
+  <text x="284" y="227" font-family="var(--font-display)" font-size="12" fill="var(--bad)">recheck fails</text>
+
+  <!-- failed -->
+  <rect x="430" y="256" width="180" height="66" rx="6" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="1.5"/>
+  <text x="520" y="278" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--bad)" text-anchor="middle">failed</text>
+  <text x="520" y="295" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">log: signing_failed</text>
+  <text x="520" y="312" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">nothing released</text>
+
+  <!-- to claimed -->
+  <line x1="155" y1="260" x2="155" y2="340" stroke="var(--accent)" stroke-width="2" marker-end="url(#ast-arrow-accent)"/>
+  <text x="172" y="280" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">claim, in its own transaction</text>
+  <text x="172" y="296" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">recheck: still C2, not expired,</text>
+  <text x="172" y="312" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">passkey still live, or a4 key still Elect</text>
+  <text x="172" y="328" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">committed before the key is touched</text>
+
+  <!-- claimed -->
+  <rect x="40" y="342" width="230" height="66" rx="6" fill="var(--paper)" stroke="var(--accent)" stroke-width="2"/>
+  <text x="155" y="364" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">claimed</text>
+  <text x="155" y="381" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">retrieve says pending</text>
+  <text x="155" y="398" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">a racing second finish: 409</text>
+
+  <!-- claimed -> failed -->
+  <path d="M270 356 H596 V324" fill="none" stroke="var(--bad)" stroke-width="1.5" marker-end="url(#ast-arrow-bad)"/>
+  <text x="284" y="347" font-family="var(--font-display)" font-size="12" fill="var(--bad)">blob will not open, or signer refuses</text>
+
+  <!-- claimed -> indeterminate -->
+  <path d="M270 392 H600 V454" fill="none" stroke="var(--warm)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ast-arrow-warm)"/>
+  <text x="284" y="414" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">signed, but the result was never saved:</text>
+  <text x="284" y="430" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">set when the server next starts</text>
+
+  <!-- indeterminate -->
+  <rect x="430" y="456" width="180" height="66" rx="6" fill="var(--warm-soft)" stroke="var(--warm)" stroke-width="1.5"/>
+  <text x="520" y="478" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">indeterminate</text>
+  <text x="520" y="495" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">a key use of unknown result</text>
+  <text x="520" y="512" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">terminal, never retried</text>
+
+  <!-- to completed -->
+  <line x1="155" y1="408" x2="155" y2="526" stroke="var(--accent)" stroke-width="2" marker-end="url(#ast-arrow-accent)"/>
+  <text x="172" y="452" font-family="var(--font-display)" font-size="12" fill="var(--ink)">unseal the seed, sign the</text>
+  <text x="172" y="468" font-family="var(--font-display)" font-size="12" fill="var(--ink)">Response and the bind,</text>
+  <text x="172" y="484" font-family="var(--font-display)" font-size="12" fill="var(--ink)">zeroize the seed</text>
+  <text x="172" y="502" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)">log: signing_completed</text>
+
+  <!-- seed lifetime -->
+  <rect x="132" y="428" width="6" height="66" rx="3" fill="var(--warm)" stroke="none"/>
+  <text x="124" y="450" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">seed in</text>
+  <text x="124" y="466" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">memory</text>
+  <text x="124" y="482" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--warm)" text-anchor="end">only here</text>
+
+  <!-- completed -->
+  <rect x="40" y="528" width="230" height="52" rx="6" fill="var(--good-soft)" stroke="var(--good)" stroke-width="1.5"/>
+  <text x="155" y="550" font-family="var(--font-mono)" font-size="14" font-weight="600" fill="var(--good)" text-anchor="middle">completed</text>
+  <text x="155" y="568" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Response and bind signature stored</text>
+
+  <!-- retrieve -->
+  <line x1="30" y1="606" x2="610" y2="606" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="30" y="630" font-family="var(--font-mono)" font-size="13" font-weight="600" fill="var(--ink)">POST …/retrieve</text>
+  <text x="168" y="630" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">with request_id and the verifier; its SHA-256 must equal the commitment</text>
+
+  <text x="30" y="656" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--bad)">wrong verifier</text>
+  <text x="200" y="656" font-family="var(--font-display)" font-size="12" fill="var(--ink)">an error in every state; nothing else</text>
+  <text x="30" y="678" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--good)">completed</text>
+  <text x="200" y="678" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the Response, the bind signature and the stored bind fields</text>
+  <text x="30" y="700" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink)">failed, indeterminate</text>
+  <text x="200" y="700" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the state name only</text>
+  <text x="30" y="722" font-family="var(--font-mono)" font-size="12" font-weight="600" fill="var(--ink-2)">no state, authorized, claimed</text>
+  <text x="252" y="722" font-family="var(--font-display)" font-size="12" fill="var(--ink)">"pending"</text>
+
+  <text x="320" y="758" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">The table stores five state names; the API reports four: pending, completed, failed, indeterminate.</text>
+</svg>

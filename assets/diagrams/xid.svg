@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 580" role="img" aria-labelledby="xid-title">
+  <title id="xid-title">How a XID is made: the inception key is encoded as canonical CBOR, hashed with SHA-256 into 32 bytes, and written as base58btc text.</title>
+  <defs>
+    <marker id="xid-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+<marker id="xid-arrow-ink-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+  </defs>
+
+  <!-- 1 inception key -->
+  <rect x="40" y="30" width="300" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="190" y="53" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">inception key</text>
+  <text x="190" y="72" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">public half of the first signing key</text>
+
+  <line x1="190" y1="88" x2="190" y2="142" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#xid-arrow-ink-2)"/>
+  <text x="202" y="120" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">encode</text>
+
+  <!-- 2 canonical CBOR -->
+  <rect x="40" y="146" width="300" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="190" y="169" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">canonical CBOR bytes</text>
+  <text x="190" y="188" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">exactly one byte sequence for this key</text>
+
+  <line x1="190" y1="204" x2="190" y2="258" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#xid-arrow-ink-2)"/>
+  <text x="202" y="236" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">hash</text>
+
+  <!-- 3 SHA-256 -->
+  <rect x="40" y="262" width="300" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="190" y="285" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">SHA-256</text>
+  <text x="190" y="304" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)" text-anchor="middle">one-way, fixed length</text>
+
+  <line x1="190" y1="320" x2="190" y2="374" stroke="var(--accent)" stroke-width="2" marker-end="url(#xid-arrow-accent)"/>
+
+  <!-- 4 the XID -->
+  <rect x="40" y="378" width="300" height="56" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="190" y="401" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--accent)" text-anchor="middle">XID</text>
+  <text x="190" y="420" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">32 bytes, never changes for this identity</text>
+
+  <line x1="190" y1="436" x2="190" y2="490" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#xid-arrow-ink-2)"/>
+  <text x="202" y="468" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">write as text</text>
+
+  <!-- 5 base58btc -->
+  <rect x="40" y="494" width="300" height="56" rx="4" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="190" y="517" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)" text-anchor="middle">base58btc text</text>
+  <text x="190" y="536" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">3dLGACrVKP67MtW4kwbG…</text>
+
+  <!-- side note -->
+  <line x1="372" y1="262" x2="372" y2="434" stroke="var(--rule)" stroke-width="1.5"/>
+  <text x="388" y="290" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">Same input, same XID.</text>
+  <text x="388" y="310" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">Given a XID and a key,</text>
+  <text x="388" y="326" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">anyone can recompute</text>
+  <text x="388" y="342" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the hash and check</text>
+  <text x="388" y="358" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">that they match.</text>
+  <text x="388" y="386" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">No registry needed.</text>
+  <text x="388" y="406" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">No one allocates XIDs,</text>
+  <text x="388" y="422" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">and no server vouches.</text>
+</svg>

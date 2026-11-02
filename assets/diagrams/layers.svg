@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 604" role="img" aria-labelledby="ly-title">
+  <title id="ly-title">Four layers behind a signature, top to bottom. The party, signer or verifier, directs. The program, such as a command-line tool, installer, browser or passkey prompt, decides what is signed and in what order: for instance it calls SHA-256 over a file, then Ed25519 sign over the digest. The library, such as libsodium, OpenSSL or ed25519-dalek, does the arithmetic; correct libraries are interchangeable. The scheme, Ed25519 in RFC 8032, is the written procedure the library implements.</title>
+  <defs>
+    <marker id="ly-arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--ink-2)"/>
+    </marker>
+    <marker id="ly-arrow-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <!-- 1. Party -->
+  <rect x="20" y="20" width="600" height="72" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="36" y="50" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Party</text>
+  <text x="36" y="68" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">directs</text>
+  <text x="170" y="50" font-family="var(--font-display)" font-size="12" fill="var(--ink)">the person or system the work is done for</text>
+  <text x="170" y="68" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">the signer directs signing; the verifier directs verification</text>
+
+  <line x1="96" y1="92" x2="96" y2="114" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ly-arrow-ink)"/>
+  <text x="106" y="108" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">runs</text>
+
+  <!-- 2. Program -->
+  <rect x="20" y="118" width="600" height="142" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="36" y="148" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Program</text>
+  <text x="36" y="166" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">sequences</text>
+  <text x="170" y="144" font-family="var(--font-display)" font-size="12" fill="var(--ink)">CLI, build script, installer, browser, passkey prompt</text>
+  <text x="170" y="162" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">decides what gets signed, and the order of the calls</text>
+
+  <rect x="170" y="178" width="170" height="34" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="255" y="200" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">1  sha256(file)</text>
+  <line x1="340" y1="195" x2="364" y2="195" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ly-arrow-ink)"/>
+  <rect x="368" y="178" width="236" height="34" rx="4" fill="var(--paper)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="486" y="200" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">2  ed25519_sign(key, digest)</text>
+  <text x="170" y="240" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">for instance; a program may also hand the raw data straight to sign</text>
+
+  <!-- calls into the library -->
+  <line x1="255" y1="212" x2="255" y2="226" stroke="var(--accent)" stroke-width="2"/>
+  <line x1="255" y1="248" x2="255" y2="300" stroke="var(--accent)" stroke-width="2" marker-end="url(#ly-arrow-accent)"/>
+  <line x1="486" y1="212" x2="486" y2="226" stroke="var(--accent)" stroke-width="2"/>
+  <line x1="486" y1="248" x2="486" y2="300" stroke="var(--accent)" stroke-width="2" marker-end="url(#ly-arrow-accent)"/>
+
+  <line x1="96" y1="260" x2="96" y2="282" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ly-arrow-ink)"/>
+  <text x="106" y="276" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">calls</text>
+
+  <!-- 3. Library -->
+  <rect x="20" y="286" width="600" height="158" rx="6" fill="var(--paper-2)" stroke="var(--ink-2)" stroke-width="1.5"/>
+  <text x="36" y="316" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Library</text>
+  <text x="36" y="334" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">does the</text>
+  <text x="36" y="350" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">arithmetic</text>
+
+  <rect x="190" y="304" width="130" height="30" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="255" y="324" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">SHA-256</text>
+  <rect x="414" y="304" width="144" height="30" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+  <text x="486" y="324" font-family="var(--font-mono)" font-size="12" fill="var(--ink)" text-anchor="middle">Ed25519 sign</text>
+  <rect x="170" y="344" width="140" height="28" rx="4" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="240" y="363" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Ed25519 keygen</text>
+  <rect x="320" y="344" width="140" height="28" rx="4" fill="var(--paper)" stroke="var(--ink-3)" stroke-width="1.5"/>
+  <text x="390" y="363" font-family="var(--font-mono)" font-size="12" fill="var(--ink-2)" text-anchor="middle">Ed25519 verify</text>
+  <text x="474" y="363" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">and many others</text>
+
+  <text x="170" y="400" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--ink)">libsodium  ·  OpenSSL  ·  ed25519-dalek</text>
+  <text x="170" y="420" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">interchangeable: any correct library, same key + same message,</text>
+  <text x="170" y="436" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">gives the identical signature, and accepts the others' signatures</text>
+
+  <line x1="96" y1="444" x2="96" y2="466" stroke="var(--ink-2)" stroke-width="1.5" marker-end="url(#ly-arrow-ink)"/>
+  <text x="106" y="460" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">implements</text>
+
+  <!-- 4. Scheme -->
+  <rect x="20" y="470" width="600" height="76" rx="6" fill="var(--paper)" stroke="var(--ink-2)" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="36" y="500" font-family="var(--font-display)" font-size="14" font-weight="600" fill="var(--ink)">Scheme</text>
+  <text x="36" y="518" font-family="var(--font-display)" font-size="12" font-weight="600" fill="var(--accent)">the procedure</text>
+  <text x="170" y="500" font-family="var(--font-display)" font-size="13" font-weight="600" fill="var(--ink)">Ed25519, specified in RFC 8032</text>
+  <text x="170" y="518" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">a written document: how keys are made, how signing and</text>
+  <text x="170" y="534" font-family="var(--font-display)" font-size="12" fill="var(--ink-2)">verification work, the curve, the sizes and the encodings</text>
+
+  <text x="320" y="574" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">"The verifier checks a signature" means the verifier's program ran</text>
+  <text x="320" y="592" font-family="var(--font-display)" font-size="12" fill="var(--ink)" text-anchor="middle">the scheme's verify function, through a library, on its behalf.</text>
+</svg>
